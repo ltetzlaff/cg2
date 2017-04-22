@@ -1,0 +1,24 @@
+{
+  "name": "cg2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server/server.js",
+  "scripts": {
+    "nodemon": "nodemon server/server.js --watch server",
+    "start": "node server/server.js",
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.tubit.tu-berlin.de/lukas.tetzlaff/CG2-HA.git"
+  },
+  "author": "lt",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.15.2",
+    "pug": "^2.0.0-beta.12"
+  },
+  "devDependencies": {
+    "nodemon": "^1.11.0"
+  }
+}

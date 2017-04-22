@@ -1,0 +1,12 @@
+{
+    "compileOnSave": true,
+    "compilerOptions": {
+        "outDir": "./frontend/built",
+        "allowJs": true,
+        "lib": ["dom", "es7"],
+        "target": "esnext"
+    },
+    "include": [
+        "./frontend/src/**/*"
+    ]
+}
