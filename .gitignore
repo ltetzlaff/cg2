@@ -1,2 +1,2 @@
-workspace/server/node_modules/*
+workspace/node_modules/*
 workspace/frontend/built/*
