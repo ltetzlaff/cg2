@@ -17,6 +17,7 @@
   "dependencies": {
     "babylonjs": "^3.0.0-alpha",
     "express": "^4.15.2",
+    "morgan": "^1.8.1",
     "pug": "^2.0.0-beta.12"
   },
   "devDependencies": {
