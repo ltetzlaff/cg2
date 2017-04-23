@@ -3,11 +3,15 @@
     "compilerOptions": {
         "watch": true,
         "outDir": "./frontend/built",
-        "allowJs": true,
+        "module": "commonjs",
+        "sourceMap": true,
         "lib": ["dom", "es7"],
         "target": "esnext"
     },
     "include": [
         "./frontend/src/**/*"
+    ],
+    "exclude": [
+        "node_modules"
     ]
 }

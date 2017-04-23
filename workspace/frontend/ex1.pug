@@ -1,7 +1,8 @@
 html
   head
-    script(src="lib/babylon.js")
-    script(src="built/engine.js")
+    link(href="frontend/main.css", rel="stylesheet")
+    script(src="node_modules/babylonjs/babylon.js")
+    script(src="frontend/built/engine.js")
   body
     h1 Sup
-    canvas#render
+    canvas#c
