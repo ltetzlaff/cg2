@@ -1,6 +1,7 @@
 {
     "compileOnSave": true,
     "compilerOptions": {
+        "watch": true,
         "outDir": "./frontend/built",
         "allowJs": true,
         "lib": ["dom", "es7"],
