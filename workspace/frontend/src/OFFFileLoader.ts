@@ -6,7 +6,6 @@ module BABYLON {
 
     public importMesh(meshesNames: any, scene: Scene, data: any, rootUrl: string, meshes: AbstractMesh[], particleSystems: ParticleSystem[], skeletons: Skeleton[]): boolean {
       const parsedMesh = this.parseOFF(meshesNames, scene, data)
-      console.log(parsedMesh)
       if (meshes) {
         meshes.push(parsedMesh)
       }
@@ -39,7 +38,6 @@ module BABYLON {
         }
       })
 
-      console.log(positionsFlat, faces)
       const vertexData = new BABYLON.VertexData()
       vertexData.positions = positionsFlat
       vertexData.indices = faces
