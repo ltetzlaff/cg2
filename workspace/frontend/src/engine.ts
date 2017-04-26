@@ -18,10 +18,26 @@ const convertToPointCloud = (mesh : BABYLON.AbstractMesh, scene : BABYLON.Scene)
     vertMeshes[i].setAbsolutePosition(vertices[i])
   }
 
-  scene.meshes.push(...vertMeshes) 
+  //scene.meshes.push(...vertMeshes) 
 
   // Create Octree
   const octree = new Trees.Octree(vertices)
+  const octreeVizMat = new WireFrameMaterial(BABYLON.Color3.Green(), scene)
+
+
+  const visualize = (octant : Trees.Octant, scene : BABYLON.Scene) => {
+    const s = octant.size
+    const b = BABYLON.MeshBuilder.CreateBox("octant lv" + octant.level, 
+      { width: s[0], height: s[1], depth: s[2] }, scene)
+    b.setAbsolutePosition(octant.center)
+    b.material = octreeVizMat
+
+    // recurse
+    octant.children.forEach(child => visualize(child, scene))
+  }
+
+  //visualize(octree, scene)
+  Object.defineProperty(window, "octree", { value: octree})
 }
 
 
@@ -46,11 +62,7 @@ class Engine {
     this.cam.attachControl(this.canvas, false)
     this.sun = new BABYLON.HemisphericLight("Sun", new BABYLON.Vector3(0, 1, 0), this.scene)
 
-    let mat = new BABYLON.StandardMaterial("wireframe", this.scene)
-	  mat.diffuseColor = BABYLON.Color3.Red()
-    mat.disableLighting = true
-	  mat.wireframe = true
-    this.wfMat = mat
+    this.wfMat = new WireFrameMaterial(BABYLON.Color3.Red(), this.scene)
 
     const ground = BABYLON.MeshBuilder.CreateGround("Ground", {
       width: 5, height: 5, subdivisions: 1
@@ -75,6 +87,15 @@ class Engine {
       
       this.scene.meshes.forEach(mesh => mesh.material = this.wfMat)
     })
+  }
+}
+
+class WireFrameMaterial extends BABYLON.StandardMaterial {
+  constructor(color : BABYLON.Color3, scene : BABYLON.Scene) {
+    super("wireframe", scene)
+    this.diffuseColor = color
+    this.disableLighting = true
+	  this.wireframe = true
   }
 }
 
