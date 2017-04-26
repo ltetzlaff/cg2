@@ -1,22 +1,27 @@
 /// <reference path="../../node_modules/babylonjs/babylon.d.ts" />
 
 const convertToPointCloud = (mesh : BABYLON.AbstractMesh, scene : BABYLON.Scene) => {
-  const vertices = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind)
+  const vertexCoordinates = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind)
       
-  if (vertices.length % 3 !== 0) {
+  if (vertexCoordinates.length % 3 !== 0) {
     throw new RangeError("Vertices array doesn't seem to consist of Vector3s")
   }
 
   const boxOptions = { size: .05 }
-  const vertCount = vertices.length / 3
+  const vertCount = vertexCoordinates.length / 3
+  const vertices = new Array<BABYLON.Vector3>(vertCount)
   const vertMeshes = new Array<BABYLON.Mesh>(vertCount)
   for (let i = 0; i < vertCount; i++) {
     let j = i * 3
+    vertices[i] = new BABYLON.Vector3(vertexCoordinates[j], vertexCoordinates[j+1], vertexCoordinates[j+2])
     vertMeshes[i] = BABYLON.MeshBuilder.CreateBox("v" + i, boxOptions, scene)
-    vertMeshes[i].setAbsolutePosition(new BABYLON.Vector3(vertices[j], vertices[j+1], vertices[j+2]))
+    vertMeshes[i].setAbsolutePosition(vertices[i])
   }
 
   scene.meshes.push(...vertMeshes) 
+
+  // Create Octree
+  const octree = new Trees.Octree(vertices)
 }
 
 
