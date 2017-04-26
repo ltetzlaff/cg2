@@ -13,31 +13,18 @@ function getExtents(points : BABYLON.Vector3[]) {
   return { min: BABYLON.Vector3.FromArray(min), max : BABYLON.Vector3.FromArray(max)}
 }
 
-const MAX_POINTS_PER_LEAF = 5
+const BUCKETSIZE = 5
 
-class Leaf {
-  private static splitsInto = 8
+class Box {
   public min : BABYLON.Vector3
   public max : BABYLON.Vector3
-  private size : BABYLON.Vector3
-  public children : Leaf[]
-  public points : BABYLON.Vector3[]
-
+  public size : BABYLON.Vector3
+  
   constructor(min : BABYLON.Vector3, size : BABYLON.Vector3) {
     this.max = min.add(size)
     this.min = min
     this.size = size
   } 
-
-  findHitOctants(ray : BABYLON.Ray) : Leaf[] {
-    if (ray.intersectsBoxMinMax(this.min, this.max)) {
-      if (this.children.length == 0) {
-        return [this]
-      } 
-      return this.children.filter(child => child.findHitOctants(ray) !== null)
-    }
-    return null
-  }
 
   contains(point : BABYLON.Vector3) : boolean {
     // max - point >= min
@@ -51,9 +38,25 @@ class Leaf {
     const center = this.min.add(this.size.scale(.5))
     return point.subtract(center).lengthSquared()
   }
+}
+
+class Octant extends Box {
+  private static splitsInto = 8
+  public children : Octant[]
+  public points : BABYLON.Vector3[]
+
+  findHitOctants(ray : BABYLON.Ray) : Octant[] {
+    if (ray.intersectsBoxMinMax(this.min, this.max)) {
+      if (this.children.length == 0) {
+        return [this]
+      } 
+      return this.children.filter(child => child.findHitOctants(ray) !== null)
+    }
+    return null
+  }
 
   subdivide(points) {
-    const power = Math.log2(Leaf.splitsInto) - 1
+    const power = Math.log2(Octant.splitsInto) - 1
     const half = this.size.scale(.5)
     for (let x = 0; x < power; x++) {
       for (let y = 0; y < power; y++) {
@@ -61,7 +64,7 @@ class Leaf {
           const offset = new BABYLON.Vector3(x * half.x, y * half.y, z * half.z)
           const min = this.min.add(offset)
 
-          const octant = new Leaf(min, half)
+          const octant = new Octant(min, half)
           points = points.filter(point => {
             if (octant.contains(point)) {
               octant.points.push(point)
@@ -78,12 +81,14 @@ class Leaf {
 
 const enum FindingPattern { KNearest, Radius }
 
-export class Octree extends Leaf {
+namespace Trees {
+
+export class Octree extends Octant {
   constructor(points : BABYLON.Vector3[]) {
     const { min, max } = getExtents(points)
     super(min, max.subtract(min))
 
-    if (points.length < MAX_POINTS_PER_LEAF) { 
+    if (points.length < BUCKETSIZE) { 
       this.subdivide(points)
     } else {
       this.points = points
@@ -103,7 +108,7 @@ export class Octree extends Leaf {
       if (sphere) {
         switch (pattern) {
           case FindingPattern.KNearest:
-            
+            candidates.push(...octant.points)
             break
           case FindingPattern.Radius:
             candidates.push(...octant.points.filter(p => sphere.contains(p)))
@@ -114,12 +119,17 @@ export class Octree extends Leaf {
       }
     })
 
-
-    // #todo
-    return null
+    if (pattern == FindingPattern.KNearest) {
+      return candidates
+        .sort((a, b) => sphere.distanceToCenter(a) - sphere.distanceToCenter(b))
+        .slice(0, options.k - 1)
+    } else {
+      return candidates
+    }
   }
 }
 
+}
 const EPSILON : number = 10e7
 
 class Sphere {
@@ -131,8 +141,14 @@ class Sphere {
     this.radius = radius
   }
 
-  contains(point : BABYLON.Vector3) {
-    // #todo
+  contains(p : BABYLON.Vector3) {
+    const r = this.radius
+    const c = this.center
+    return (p.x - c.x)**2 + (p.y - c.y)**2 + (p.z - c.z)**2 <= r*r
+  }
+
+  distanceToCenter(point : BABYLON.Vector3) : number {
+    return point.subtract(this.center).lengthSquared()
   }
 }
 
