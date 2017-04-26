@@ -1,10 +1,11 @@
 html
   head
     link(href="frontend/main.css", rel="stylesheet")
-    script(src="node_modules/babylonjs/babylon.js")
-    script(src="frontend/built/engine.js")
-    script(src="frontend/built/OFFFileLoader.js")
-    script(src="frontend/built/Octree.js")
+    script(src="node_modules/babylonjs/babylon.js")    
+    
+    - const scripts = ["engine", "OFFFileLoader", "Trees", "Octree"]
+    each s in scripts
+      script(src="frontend/built/" + s + ".js")
   body
     h1 Sup
     canvas#c
