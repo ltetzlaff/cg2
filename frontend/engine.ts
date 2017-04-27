@@ -1,4 +1,4 @@
-/// <reference path="../../node_modules/babylonjs/babylon.d.ts" />
+/// <reference path="../node_modules/babylonjs/babylon.d.ts" />
 
 const convertToPointCloud = (mesh : BABYLON.AbstractMesh, scene : BABYLON.Scene) => {
   const vertexCoordinates = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind)

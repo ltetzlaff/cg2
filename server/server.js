@@ -10,7 +10,7 @@ const http = require("http").Server(e)
 e.use(express.static("."))
 e.use(logger("dev"))
 e.set("view engine", "pug")
-e.set("views", "frontend")
+e.set("views", ".")
 e.get("/", (req, res) => res.render("ex1"))
 e.get("/models/:file", (req, res) => {
   readFile(join("..", "ex1", "off_files", req.params.file), "utf8", (err, data) => {
