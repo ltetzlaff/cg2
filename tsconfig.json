@@ -2,16 +2,17 @@
     "compileOnSave": true,
     "compilerOptions": {
         "watch": true,
-        "outDir": "./frontend/built",
         "module": "commonjs",
         "sourceMap": true,
         "lib": ["dom", "es7"],
         "target": "esnext"
     },
     "include": [
-        "./frontend/src/**/*"
+        "frontend/**/*",
+        "tests/**/*"
     ],
     "exclude": [
-        "node_modules"
+        "node_modules",
+        "server"
     ]
 }

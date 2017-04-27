@@ -1,5 +1,8 @@
-workspace/node_modules/*
-workspace/frontend/built/*
+node_modules/*
+frontend/**/*.js
+frontend/**/*.map
+tests/**/*.map
+tests/**/*.js
 ex1/*
 ex2/*
 ex3/*
