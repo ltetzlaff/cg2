@@ -1,0 +1,31 @@
+{
+  "name": "cg2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server/server.js",
+  "scripts": {
+    "server": "nodemon server.js --watch .",
+    "start": "node server/server.js",
+    "build": "tsc",
+    "test": "node node_modules/browserify/bin/cmd.js tests/*.js | node node_modules/tape-run/bin/run.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "author": "lt",
+  "license": "MIT",
+  "dependencies": {
+    "babylonjs": "^3.0.0-alpha",
+    "express": "^4.15.2",
+    "morgan": "^1.8.1",
+    "pug": "^2.0.0-beta.12"
+  },
+  "devDependencies": {
+    "@types/tape": "^4.2.29",
+    "browserify": "^14.3.0",
+    "nodemon": "^1.11.0",
+    "tape": "^4.6.3",
+    "tape-run": "^3.0.0"
+  }
+}

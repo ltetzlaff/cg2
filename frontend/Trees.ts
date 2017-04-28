@@ -80,3 +80,4 @@ namespace Trees {
     }
   }
 }
+export = Trees
