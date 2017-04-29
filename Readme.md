@@ -7,7 +7,7 @@ npm install -g typescript
 npm install
 ```
 
-# Dev (in workspace/)
+## Dev (in workspace/)
 
 Typescript builds are automatic (see `tsconfig.json`), express-server can be started by: (automatic reload on changes)
 
