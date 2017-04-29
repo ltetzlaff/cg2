@@ -12,8 +12,8 @@ const b = new TreesUtils.Box(min, size)
 const cases = [
   { name: "v3LowestBoundary", in: min.clone(), expect: true },
   { name: "v3LowestOutside", in: min.subtract(new BABYLON.Vector3(-1, -2, -3)), expect: true },
-  { name: "v3LowestOutsideClose", in: min.subtract(new BABYLON.Vector3(-.1, -.1, -.1)), expect: false },
-  { name: "v3LowestOutsideVeryClose", in: min.subtract(new BABYLON.Vector3(-.001, 0, 0)), expect: false },
+  { name: "v3LowestOutsideClose", in: min.subtract(new BABYLON.Vector3(.1, .1, .1)), expect: false },
+  { name: "v3LowestOutsideVeryClose", in: min.subtract(new BABYLON.Vector3(.001, 0, 0)), expect: false },
   { name: "v3SomewhereWithinA", in: min.add(size.scale(.2)), expect: true },
   { name: "v3SomewhereWithinB", in: min.add(size.scale(.5)), expect: true },
   { name: "v3SomewhereWithinC", in: min.add(size.scale(.8)), expect: true },
