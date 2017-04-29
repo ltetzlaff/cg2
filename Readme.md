@@ -1,16 +1,32 @@
 # CG2
 
-## Setup (in workspace/)
+## Setup (in ./)
 
 ```bash
 npm install -g typescript
 npm install
 ```
 
-## Dev (in workspace/)
+## Dev (in ./)
 
-Typescript builds are automatic (see `tsconfig.json`), express-server can be started by: (automatic reload on changes)
+Typescript builds are automatic (see `tsconfig.json`)
+```bash
+tsc
+```
 
+Express-server can be started by: (automatic reload on changes)
 ```bash
 npm run server
 ```
+this hosts a webserver accessible at localhost:3000
+models will be fetched from localhost:3000/models/*fileName* where *fileName* is retrieved from [whereever this points](https://github.com/ltetzlaff/cg2/blob/master/server/server.js#L16)
+
+
+Tests
+```bash
+npm test
+```
+
+## Contribution
+
+Respect the gitignore (keep out university material and fetch that manually)
