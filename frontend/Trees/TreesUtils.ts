@@ -1,5 +1,4 @@
-namespace Trees {
-
+export namespace TreesUtils {
   export const enum FindingPattern { KNearest, Radius }
 
   export interface Tree {
@@ -51,8 +50,8 @@ namespace Trees {
       // Point within min and max
       const min = this.min
       const max = this.max
-      return (p.x > min.x && p.y > min.y && p.z > min.z
-           && p.x < max.x && p.y < max.y && p.z < max.z)
+      return (p.x >= min.x && p.y >= min.y && p.z >= min.z
+            && p.x <= max.x && p.y <= max.y && p.z <= max.z)
     }
 
     distanceToCenter(point : BABYLON.Vector3) : number {
@@ -60,7 +59,7 @@ namespace Trees {
     }
   }
 
-  
+
   export class Sphere {
     private center : BABYLON.Vector3
     private radius : number
@@ -80,4 +79,3 @@ namespace Trees {
     }
   }
 }
-export = Trees

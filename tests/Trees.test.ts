@@ -1,11 +1,13 @@
 import * as test from "tape"
 import * as BABYLON from "babylonjs";
-import * as Trees from "../frontend/Trees"
+import { TreesUtils } from "../frontend/Trees/TreesUtils"
+
+
 
 const min = new BABYLON.Vector3(1, 4, 5)
 const size = new BABYLON.Vector3(2, 3, 4)
 const max = min.add(size)
-const b = new Trees.Box(min, size)
+const b = new TreesUtils.Box(min, size)
 
 const cases = [
   { name: "v3LowestBoundary", in: min.clone(), expect: true },
