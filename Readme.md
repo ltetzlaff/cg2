@@ -2,8 +2,19 @@
 
 ## Setup (in ./)
 
+### Install NodeJS
+
+[Download](https://nodejs.org/en/download/current/)
+
+### Install Typescript globally
+
 ```bash
 npm install -g typescript
+```
+
+### Fetch dependencies
+
+```bash
 npm install
 ```
 
