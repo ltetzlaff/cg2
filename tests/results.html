@@ -1,0 +1,20 @@
+<html>
+  <head>
+    <script>
+        console.log = (...msg) => {
+          let el = document.createElement("p")
+          el.innerHTML = msg
+            //.map(i => JSON.stringify(i))
+            .join("</br>")
+          document.querySelector("#log").appendChild(el)
+        }
+        
+        window.onerror = msg => console.log(msg)
+    </script>
+    <script src="..//node_modules/babylonjs/babylon.js"></script>
+    <script src="results.js"></script>
+  </head>
+  <body>
+    <div id="log"></div>
+  </body>
+</html>

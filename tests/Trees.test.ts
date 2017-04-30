@@ -1,9 +1,9 @@
 import * as test from "tape"
-import * as BABYLON from "babylonjs";
 import { TreesUtils } from "../frontend/Trees/TreesUtils"
 
+const name = "Trees/TreesUtils/Box.contains/"
 
-
+// Setup
 const min = new BABYLON.Vector3(1, 4, 5)
 const size = new BABYLON.Vector3(2, 3, 4)
 const max = min.add(size)
@@ -23,8 +23,6 @@ const cases = [
   { name: "v3HighestOutsideVeryClose", in: max.add(new BABYLON.Vector3(0,.001,0)), expect: false }
 ]
 
-const name = "Trees/Box.contains/"
-
 cases.forEach(testCase => {
   test(name + testCase.name, t => {
     const result = b.contains(testCase.in)
@@ -32,6 +30,3 @@ cases.forEach(testCase => {
     t.end()
   })
 })
-
-
-// #TODO

@@ -7,11 +7,11 @@
     "server": "nodemon server.js --watch .",
     "start": "node server/server.js",
     "build": "tsc",
-    "test": "node node_modules/browserify/bin/cmd.js tests/*.js | node node_modules/tape-run/bin/run.js"
+    "test": "(rm tests/results.js || true) && node node_modules/browserify/bin/cmd.js tests/*.js > tests/results.js"
   },
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/ltetzlaff/cg2.git"
   },
   "author": "lt",
   "license": "MIT",
@@ -25,7 +25,6 @@
     "@types/tape": "^4.2.29",
     "browserify": "^14.3.0",
     "nodemon": "^1.11.0",
-    "tape": "^4.6.3",
-    "tape-run": "^3.0.0"
+    "tape": "^4.6.3"
   }
 }

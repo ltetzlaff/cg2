@@ -29,9 +29,6 @@ export namespace TreesUtils {
     return BABYLON.Vector3.Dot(ray.direction, p.subtract(ray.origin)) <= EPSILON
   }
 
-  export const BUCKETSIZE = 5
-  export const MAXDEPTH = 5
-
   export class Box {
     public min : BABYLON.Vector3
     public max : BABYLON.Vector3
