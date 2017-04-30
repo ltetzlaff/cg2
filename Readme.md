@@ -40,4 +40,8 @@ npm test
 
 ## Contribution
 
-Respect the gitignore (keep out university material and fetch that manually)
+- respect the gitignore (keep out university material and fetch that manually)
+- use `git pull --rebase` in favor of regular pull, i recommend configuring it globally via: 
+  ```bash
+  git config --global pull.rebase true
+  ```
