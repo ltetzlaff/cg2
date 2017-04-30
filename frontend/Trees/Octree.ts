@@ -1,16 +1,30 @@
 import { TreesUtils } from "./TreesUtils"
 
+class OctreeOptions {
+  public bucketSize : number
+  public maxDepth : number
+
+  constructor(bucketSize : number, maxDepth : number) {
+    this.bucketSize = bucketSize
+    this.maxDepth = maxDepth
+  }
+}
+
+const DEFAULT = new OctreeOptions(5, 5)
+
 export class Octant extends TreesUtils.Box {
   private static splitsInto = 8
   public children : Octant[]
   public level : number
   public points : BABYLON.Vector3[]
+  private options : OctreeOptions
 
-  constructor(min : BABYLON.Vector3, size : BABYLON.Vector3, level : number) {
+  constructor(min : BABYLON.Vector3, size : BABYLON.Vector3, level : number, options : OctreeOptions) {
     super(min, size)
     this.level = level
     this.children = []
     this.points = []
+    this.options = options
   }
 
   findHitOctants(ray : BABYLON.Ray) : Octant[] {
@@ -24,7 +38,7 @@ export class Octant extends TreesUtils.Box {
   }
 
   trySubdivide() {
-    if (this.level === TreesUtils.MAXDEPTH || this.points.length <= TreesUtils.BUCKETSIZE) {
+    if (this.level === this.options.maxDepth || this.points.length <= this.options.bucketSize) {
       return
     }
     
@@ -36,7 +50,7 @@ export class Octant extends TreesUtils.Box {
           const offset = new BABYLON.Vector3(x * half.x, y * half.y, z * half.z)
           const min = this.min.add(offset)
 
-          const octant = new Octant(min, half, this.level + 1)
+          const octant = new Octant(min, half, this.level + 1, this.options)
           this.children.push(octant)            
           this.points = this.points.filter(point => {
             if (octant.contains(point)) {
@@ -52,12 +66,10 @@ export class Octant extends TreesUtils.Box {
   }
 }
 
-
-
 export class Octree extends Octant implements TreesUtils.Tree {
-  constructor(points : BABYLON.Vector3[]) {
+  constructor(points : BABYLON.Vector3[], options : OctreeOptions = DEFAULT) {
     const { min, max } = TreesUtils.getExtents(points)
-    super(min, max.subtract(min), 0)
+    super(min, max.subtract(min), 0, options)
 
     this.points = points
     this.trySubdivide()
