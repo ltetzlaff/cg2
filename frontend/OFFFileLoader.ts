@@ -1,4 +1,4 @@
-"use strict"
+/// <reference path="../node_modules/babylonjs/babylon.d.ts" />
 
 module BABYLON {
   export class OFFFileLoader implements ISceneLoaderPlugin {

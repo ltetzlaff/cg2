@@ -1,3 +1,4 @@
+import "babylonjs"
 import { TreesUtils } from "./TreesUtils"
 
 class OctreeOptions {

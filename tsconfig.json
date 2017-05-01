@@ -1,8 +1,7 @@
 {
     "compileOnSave": true,
     "compilerOptions": {
-        "watch": true,
-        "module": "commonjs",
+        "module": "none",
         "sourceMap": true,
         "lib": ["dom", "es7"],
         "target": "esnext"

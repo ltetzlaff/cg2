@@ -1,3 +1,5 @@
+import "babylonjs"
+
 export namespace TreesUtils {
   export const enum FindingPattern { KNearest, Radius }
 

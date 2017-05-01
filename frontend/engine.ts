@@ -1,4 +1,6 @@
-/// <reference path="../node_modules/babylonjs/babylon.d.ts" />
+import * as BABYLON from "../node_modules/babylonjs/babylon.module"
+
+import { Octree, Octant } from "./Trees/Octree"
 
 const convertToPointCloud = (mesh : BABYLON.AbstractMesh, scene : BABYLON.Scene) => {
   const vertexCoordinates = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind)
@@ -21,11 +23,11 @@ const convertToPointCloud = (mesh : BABYLON.AbstractMesh, scene : BABYLON.Scene)
   //scene.meshes.push(...vertMeshes) 
 
   // Create Octree
-  const octree = new Trees.Octree(vertices)
+  const octree = new Octree(vertices)
   const octreeVizMat = new WireFrameMaterial(BABYLON.Color3.Green(), scene)
 
 
-  const visualize = (octant : Trees.Octant, scene : BABYLON.Scene) => {
+  const visualize = (octant : Octant, scene : BABYLON.Scene) => {
     const s = octant.size
     const b = BABYLON.MeshBuilder.CreateBox("octant lv" + octant.level, 
       { width: s[0], height: s[1], depth: s[2] }, scene)

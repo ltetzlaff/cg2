@@ -2,11 +2,10 @@
   "name": "cg2",
   "version": "1.0.0",
   "description": "",
-  "main": "server/server.js",
   "scripts": {
-    "server": "nodemon server.js --watch .",
-    "start": "node server/server.js",
-    "build": "tsc",
+    "postinstall": "cp node_modules/babylonjs/babylon.js node_modules/babylonjs/babylon.module.js",
+    "server": "nodemon server/server.js --watch .",
+    "build": "tsc && node node_modules/browserify/bin/cmd.js frontend/engine.js > frontend.js",
     "test": "(rm tests/results.js || true) && node node_modules/browserify/bin/cmd.js tests/*.js > tests/results.js"
   },
   "repository": {
@@ -17,14 +16,14 @@
   "license": "MIT",
   "dependencies": {
     "babylonjs": "^3.0.0-alpha",
+    "browserify": "^14.3.0",
     "express": "^4.15.2",
     "morgan": "^1.8.1",
     "pug": "^2.0.0-beta.12"
   },
   "devDependencies": {
-    "@types/tape": "^4.2.29",
-    "browserify": "^14.3.0",
     "nodemon": "^1.11.0",
+    "@types/tape": "^4.2.29",
     "tape": "^4.6.3"
   }
 }

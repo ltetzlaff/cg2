@@ -1,11 +1,7 @@
 html
   head
     link(href="frontend/main.css", rel="stylesheet")
-    script(src="node_modules/babylonjs/babylon.js")    
-    
-    - const scripts = ["engine", "OFFFileLoader", "Trees", "Octree"]
-    each s in scripts
-      script(src="frontend/" + s + ".js")
+    script(src="frontend.js")
   body
     h1 Sup
     canvas#c

@@ -1,4 +1,5 @@
 import * as test from "tape"
+import * as BABYLON from "../node_modules/babylonjs/babylon.module"
 import { Octree, Octant } from "../frontend/Trees/Octree"
 
 const name = "Trees/Octree/"
