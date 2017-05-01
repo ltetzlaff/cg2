@@ -18,6 +18,8 @@
     "babylonjs": "^3.0.0-alpha",
     "browserify": "^14.3.0",
     "express": "^4.15.2",
+    "jquery": "^3.2.1",
+    "materialize-css": "^0.98.2",
     "morgan": "^1.8.1",
     "pug": "^2.0.0-beta.12"
   },

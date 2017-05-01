@@ -1,7 +1,56 @@
+//- Mixins
+mixin radio(name, id)
+  p
+    input(type="radio", name= name, id= id)
+    label(for= id)= id
+  .options
+    if block
+      block
+
+mixin range(id, label, min, max)
+  p.range-field
+    input(type="range", id= id, min= min, max= max)
+    label(for= id)= label
+
+mixin number(id, value, step)
+  input(type="number", id= id, value= value, step= step)  
+
+mixin checkbox(id, label)
+  p
+    input(type="checkbox", id= id, checked="checked")
+    label(for= id)= label
+
 html
   head
+    //- Meta
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+
+    //- Vendor
+    link(href="http://fonts.googleapis.com/icon?family=Material+Icons",rel="stylesheet")
+    link(href="node_modules/materialize-css/dist/css/materialize.min.css", rel="stylesheet", media="screen,projection")
+    script(src="node_modules/jquery/dist/jquery.min.js")
+    script(src="node_modules/materialize-css/dist/js/materialize.min.js")
+
+    //- Custom stuff
     link(href="frontend/main.css", rel="stylesheet")
     script(src="frontend.js")
   body
-    h1 Sup
     canvas#c
+    #details
+      section
+        h2 Search
+        +radio("search", "Linear")
+        +radio("search", "Octree")
+          +range("octreeBucketSize", "Bucket Size", 1, 30)
+          +range("octreeMaxDepth", "Max Depth", 1, 10)
+        +radio("search", "KDtree")
+          +range("kdtreeBucketSize", "Bucket Size", 1, 30)
+      section
+        h2 Query
+        +radio("query", "Radius")
+          +number("radius", 1, .1)
+        +radio("query", "KNearest")                   
+          +number("knearest", 10, 1)
+      section
+        h2 Misc
+        +checkbox("visualize", "Render Data Structure")

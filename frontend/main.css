@@ -1,4 +1,21 @@
+body {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-areas: "main details";
+  grid-gap: 25px;
+  padding: 0 25px 0 0;
+}
+
 #c {
-  width: 80%;
+  width: 100%;
   height: 100%;
+  grid-area: main;  
+}
+
+#details {
+  grid-area: details
+}
+
+.options {
+  padding-left: 35px;
 }
