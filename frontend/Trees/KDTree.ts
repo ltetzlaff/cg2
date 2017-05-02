@@ -1,4 +1,4 @@
-import "babylonjs"
+import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "./TreesUtils"
 
 export class KDTree implements TreesUtils.Tree {

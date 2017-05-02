@@ -1,4 +1,4 @@
-import "babylonjs"
+import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "./TreesUtils"
 
 class OctreeOptions {
@@ -68,7 +68,7 @@ export class Octant extends TreesUtils.Box {
 }
 
 export class Octree extends Octant implements TreesUtils.Tree {
-  constructor(points : BABYLON.Vector3[], options : OctreeOptions = DEFAULT) {
+  constructor(points : BABYLON.Vector3[], options : any = DEFAULT) {
     const { min, max } = TreesUtils.getExtents(points)
     super(min, max.subtract(min), 0, options)
 
