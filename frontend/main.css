@@ -16,6 +16,11 @@ body {
   grid-area: details
 }
 
+p {
+  margin-bottom: 0;
+}
+
 .options {
+  margin-top: -.2em;
   padding-left: 35px;
 }
