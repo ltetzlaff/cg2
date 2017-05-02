@@ -1,10 +1,13 @@
 //- Mixins
-mixin radio(name, id)
+mixin radio(name, id, checked)
   p
-    input(type="radio", name= name, id= id)
+    if checked
+      input(type="radio", name= name, id= id, checked)
+    else
+      input(type="radio", name= name, id= id)    
     label(for= id)= id
-  .options
-    if block
+  if block
+    .options
       block
 
 mixin range(id, label, min, max)
@@ -13,16 +16,33 @@ mixin range(id, label, min, max)
     label(for= id)= label
 
 mixin number(id, value, step)
-  input(type="number", id= id, value= value, step= step)  
+  input(type="number", id= id, min="0", value= value, step= step)  
 
-mixin checkbox(id, label)
+mixin checkbox(id, label, checked)
   p
-    input(type="checkbox", id= id, checked="checked")
+    if checked
+      input(type="checkbox", id= id, checked)
+    else
+      input(type="checkbox", id= id)
     label(for= id)= label
+
+mixin file(id, label)
+  .file-field.input-field
+    .btn
+      span= label
+      input(type="file")
+    .file-path-wrapper
+      input.file-path.validate(type="text")
+
+mixin button(c, text, icon)
+  a.waves-effect.waves-light.btn(class= c, value= text)
+    i.material-icons.right= icon
+    = text
 
 html
   head
     //- Meta
+    title CG2
     meta(name="viewport", content="width=device-width, initial-scale=1.0")
 
     //- Vendor
@@ -38,19 +58,24 @@ html
     canvas#c
     #details
       section
-        h2 Search
+        h3 Search
         +radio("search", "Linear")
-        +radio("search", "Octree")
-          +range("octreeBucketSize", "Bucket Size", 1, 30)
-          +range("octreeMaxDepth", "Max Depth", 1, 10)
+        +radio("search", "Octree", true)
+          +range("octreeBucketSize", "Bucket Size", 1, 100)
+          +range("octreeMaxDepth", "Max Depth", 0, 10)
         +radio("search", "KDtree")
           +range("kdtreeBucketSize", "Bucket Size", 1, 30)
       section
-        h2 Query
-        +radio("query", "Radius")
+        h3 Query
+        +radio("query", "Radius", true)
           +number("radius", 1, .1)
         +radio("query", "KNearest")                   
           +number("knearest", 10, 1)
       section
-        h2 Misc
-        +checkbox("visualize", "Render Data Structure")
+        h3 Misc
+        +checkbox("visualize", "Render Data Structure", true)
+      section
+        h3 Load
+        //+file("load", "Load Model")
+        +button("load", "teapot", "attachment")
+        +button("load", "sphere", "attachment")
