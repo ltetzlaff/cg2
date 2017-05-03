@@ -16,6 +16,7 @@ class Engine {
   private octreeOpts : OctreeOptions
   private visualizeMeshes : BABYLON.Mesh[]
   private visualizeMaterial : BABYLON.Material
+  private visualize : boolean
   private wfMat : BABYLON.Material
   
   constructor(canvas : HTMLCanvasElement) {
@@ -35,6 +36,7 @@ class Engine {
     this.vertices = []
     this.visualizeMeshes = []
     this.visualizeMaterial = new WireFrameMaterial(BABYLON.Color3.Green(), this.scene)
+    this.visualize = true
     this.wfMat = new WireFrameMaterial(BABYLON.Color3.Red(), this.scene)    
 
     const ground = BABYLON.MeshBuilder.CreateGround("Ground", {
@@ -49,11 +51,19 @@ class Engine {
 
   buildTree() {    
     this.tree = new Octree(this.vertices, this.octreeOpts)
+    this.visualizeTree()
+  }
+
+  visualizeTree() {
     const scene = this.scene
     
-    // Visualize Tree
+    // Delete old visuals
     this.visualizeMeshes.forEach(m => m.dispose())
     this.visualizeMeshes = []
+
+    if (!this.visualize) {
+      return
+    }
 
     const visualize = (octant : Octant) => {
       const s = octant.size
@@ -66,7 +76,6 @@ class Engine {
       // recurse
       octant.children.forEach(child => visualize(child))
     }
-
     visualize(this.tree as Octree)
     //BABYLON.SceneOptimizer.OptimizeAsync(scene, BABYLON.SceneOptimizerOptions.ModerateDegradationAllowed())
   }
@@ -74,20 +83,25 @@ class Engine {
   setupUIBindings() {
     const buttons = $$(".load").forEach((el : Element) => {
       el.addEventListener("click", () => {
-        e.load(el.getAttribute("value") + ".off", true)
+        this.load(el.getAttribute("value") + ".off", true)
       })
     })
 
     // Bind Octree-Configuration (see top) to ui elements
-    e.octreeOpts = new OctreeOptions(getFloat($("#oBucketSize")), getFloat($("#oMaxDepth")))
+    this.octreeOpts = new OctreeOptions(getFloat($("#oBucketSize")), getFloat($("#oMaxDepth")))
     
     ;($("#oMaxDepth") as HTMLInputElement).onchange = ev => {
-      e.octreeOpts.maxDepth = getFloat(ev.target)
-      e.buildTree()
+      this.octreeOpts.maxDepth = getFloat(ev.target)
+      this.buildTree()
     }
     ;($("#oBucketSize") as HTMLInputElement).onchange = ev => {
-      e.octreeOpts.bucketSize = getFloat(ev.target)
-      e.buildTree()
+      this.octreeOpts.bucketSize = getFloat(ev.target)
+      this.buildTree()
+    }
+
+    ;($("#visualize") as HTMLInputElement).onchange = ev => {
+      this.visualize = (ev.target as HTMLInputElement).checked
+      this.visualizeTree()
     }
   }
 
