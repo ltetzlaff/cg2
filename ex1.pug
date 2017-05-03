@@ -52,8 +52,8 @@ html
     script(src="node_modules/materialize-css/dist/js/materialize.min.js")
 
     //- Custom stuff
-    link(href="frontend/main.css", rel="stylesheet")
-    script(src="frontend.js")
+    link(href="main.css", rel="stylesheet")
+    script(src="built/frontend.js")
   body
     canvas#c
     #details
@@ -61,8 +61,8 @@ html
         h3 Search
         +radio("search", "Linear")
         +radio("search", "Octree", true)
-          +range("octreeBucketSize", "Bucket Size", 1, 100)
-          +range("octreeMaxDepth", "Max Depth", 0, 10)
+          +range("oBucketSize", "Bucket Size", 1, 100)
+          +range("oMaxDepth", "Max Depth", 0, 10)
         +radio("search", "KDtree")
           +range("kdtreeBucketSize", "Bucket Size", 1, 30)
       section

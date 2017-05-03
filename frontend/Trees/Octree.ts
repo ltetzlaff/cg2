@@ -1,7 +1,7 @@
 import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "./TreesUtils"
 
-class OctreeOptions {
+export class OctreeOptions {
   public bucketSize : number
   public maxDepth : number
 
