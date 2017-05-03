@@ -24,7 +24,7 @@ export class OFFFileLoader implements BABYLON.ISceneLoaderPlugin {
 
     // Prepare Mesh Structure
     const firstLine = lines.shift()
-    console.log(firstLine.trim().split(" "))
+    //console.log(firstLine.trim().split(" "))
     const [numVertices, numFaces] : number[] = firstLine.trim().split(whitespace).map(Number)
     const positionsFlat : number[] = []
     const faces : number[] = []

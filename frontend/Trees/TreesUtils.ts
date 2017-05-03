@@ -4,6 +4,8 @@ export namespace TreesUtils {
   export const enum FindingPattern { KNearest, Radius }
 
   export interface Tree {
+    children : any[]
+
     pick(ray : BABYLON.Ray, pattern : FindingPattern, options : any) : BABYLON.Vector3[]
 
   }
