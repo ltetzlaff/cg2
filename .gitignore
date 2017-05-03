@@ -1,9 +1,6 @@
 node_modules/*
-frontend/**/*.js
-frontend/**/*.map
-frontend.js
-tests/**/*.map
-tests/**/*.js
+built/*.js
+built/*.js.map
 ex1/*
 ex2/*
 ex3/*
