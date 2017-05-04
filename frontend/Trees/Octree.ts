@@ -77,7 +77,11 @@ export class Octree extends Octant implements TreesUtils.Tree {
   }
 
   pick(ray : BABYLON.Ray, pattern : TreesUtils.FindingPattern = TreesUtils.FindingPattern.KNearest, options : any) : BABYLON.Vector3[] {
-    const relevantOctants = this.findHitOctants(ray)
+    const hitOctants = this.findHitOctants(ray)
+
+    if (!hitOctants) return
+
+    const relevantOctants = hitOctants
       .map(octant => ({ r: octant.distanceToCenter(ray.origin), octant }))
       .sort((o1, o2) => o1.r - o2.r)
       .map(o => o.octant)
@@ -103,7 +107,7 @@ export class Octree extends Octant implements TreesUtils.Tree {
     if (pattern == TreesUtils.FindingPattern.KNearest) {
       return candidates
         .sort((a, b) => sphere.distanceToCenter(a) - sphere.distanceToCenter(b))
-        .slice(0, options.k - 1)
+        .slice(0, options.k)
     } else {
       return candidates
     }

@@ -1,7 +1,7 @@
 import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
 
 export namespace TreesUtils {
-  export const enum FindingPattern { KNearest, Radius }
+  export enum FindingPattern { KNearest, Radius }
 
   export interface Tree {
     children : any[]

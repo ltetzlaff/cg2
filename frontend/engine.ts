@@ -11,6 +11,9 @@ class Engine {
   private sun: BABYLON.Light
   private cam : BABYLON.ArcRotateCamera
   
+  private findingPattern : TreesUtils.FindingPattern
+  private findingOptions : any
+  private treeClass : string
   private tree : TreesUtils.Tree
   private vertices : BABYLON.Vector3[]
   private octreeOpts : OctreeOptions
@@ -33,6 +36,8 @@ class Engine {
     this.cam.attachControl(this.canvas, false)
     this.sun = new BABYLON.HemisphericLight("Sun", new BABYLON.Vector3(0, 1, 0), this.scene)
 
+    // Tree Stuff
+    this.treeClass = ""
     this.vertices = []
     this.visualizeMeshes = []
     this.visualizeMaterial = new WireFrameMaterial(BABYLON.Color3.Green(), this.scene)
@@ -49,12 +54,28 @@ class Engine {
     this.engine.runRenderLoop(() => this.scene.render())
   }
 
-  buildTree() {    
-    this.tree = new Octree(this.vertices, this.octreeOpts)
-    this.visualizeTree()
+  buildTree() {
+    console.log(this.treeClass)
+    switch (this.treeClass) {
+      case "Linear":
+        // #TODO
+        break
+      case "Octree":
+        this.tree = new Octree(this.vertices, this.octreeOpts)
+        this.visualizeTree()
+        break
+      case "KDtree":
+        //this.tree = new KDTree(this.vertices)
+        this.visualizeTree()        
+        break
+      default:
+        throw new TypeError("unknown Tree to be constructed")
+    }   
   }
 
   visualizeTree() {
+    if (!this.tree) return
+    
     const scene = this.scene
     
     // Delete old visuals
@@ -87,22 +108,48 @@ class Engine {
       })
     })
 
-    // Bind Octree-Configuration (see top) to ui elements
     this.octreeOpts = new OctreeOptions(getFloat($("#oBucketSize")), getFloat($("#oMaxDepth")))
-    
-    ;($("#oMaxDepth") as HTMLInputElement).onchange = ev => {
-      this.octreeOpts.maxDepth = getFloat(ev.target)
-      this.buildTree()
+    this.findingOptions = {
+      k: getFloat($("#p_knearest")),
+      radius: getFloat($("#p_radius"))
     }
-    ;($("#oBucketSize") as HTMLInputElement).onchange = ev => {
-      this.octreeOpts.bucketSize = getFloat(ev.target)
-      this.buildTree()
-    }
+    this.findingPattern = TreesUtils.FindingPattern[getRadio("query").value]
+    this.treeClass = getRadio("search").value
 
-    ;($("#visualize") as HTMLInputElement).onchange = ev => {
-      this.visualize = (ev.target as HTMLInputElement).checked
+    bindOnChangeNumeric("#oMaxDepth", n => {
+      this.octreeOpts.maxDepth = n
+      this.buildTree()
+    })
+    bindOnChangeNumeric("#oBucketSize", n => {
+      this.octreeOpts.bucketSize = n
+      this.buildTree()
+    })    
+    bindOnChangeNumeric("#p_knearest", n => this.findingOptions.k = n)
+    bindOnChangeNumeric("#p_radius", n => this.findingOptions.radius = n)
+    bindOnChangeCheckbox("#visualize", b => {
+      this.visualize = b
       this.visualizeTree()
-    }
+    })
+
+    bindOnChangeRadio("query", s => {
+      this.findingPattern = TreesUtils.FindingPattern[s]
+    })
+
+    bindOnChangeRadio("search", s => this.treeClass = s)
+  }
+
+  setupPicking() {
+    // capture mouse events
+    window.addEventListener("click", () => {
+      if (!this.tree) return
+      
+      const scene = this.scene
+      console.log(scene.pointerX, scene.pointerY)
+      const ray = scene.createPickingRay(scene.pointerX, scene.pointerY, null, null)
+      
+      const results = this.tree.pick(ray, this.findingPattern, this.findingOptions)
+      console.log(results)
+    }) 
   }
 
   load(file : string, asPointCloud : boolean = false) : void {
@@ -155,12 +202,27 @@ class WireFrameMaterial extends BABYLON.StandardMaterial {
 
 const $  = (selector : string) => document.querySelector(selector)
 const $$ = (selector : string) => document.querySelectorAll(selector)
-const getFloat = (el : EventTarget) => parseFloat((el as HTMLInputElement).value)
+const getFloat = (el : EventTarget) => parseFloat(getString(el))
+const getCheckbox = (ev : Event) => (ev.target as HTMLInputElement).checked
+const getString = (el : EventTarget) => (el as HTMLInputElement).value
+const getRadio = (name : string) => ($("input[name='" + name + "']:checked") as HTMLInputElement)
 
+function bindOnChangeNumeric(selector : string, cb : (n: number) => void) {
+  ;($(selector) as HTMLInputElement).onchange = ev => cb(getFloat(ev.target))
+}
+
+function bindOnChangeCheckbox(selector : string, cb : (b: boolean) => void) {
+  ;($(selector) as HTMLInputElement).onchange = ev => cb(getCheckbox(ev))
+}
+
+function bindOnChangeRadio(name : string, cb : (s : string) => void) {
+  getRadio(name).onchange = ev => cb(getString(ev.target))
+}
 
 var e : Engine
 window.addEventListener("DOMContentLoaded", () => {
   e = new Engine(document.querySelector("#c") as HTMLCanvasElement)
   e.setupUIBindings()
+  e.setupPicking()
   e.run()  
 })

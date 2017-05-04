@@ -2,9 +2,9 @@
 mixin radio(name, id, checked)
   p
     if checked
-      input(type="radio", name= name, id= id, checked)
+      input(type="radio", name= name, id= id, value=id, checked)
     else
-      input(type="radio", name= name, id= id)    
+      input(type="radio", name= name, id= id, value= id)    
     label(for= id)= id
   if block
     .options
@@ -68,9 +68,9 @@ html
       section
         h3 Query
         +radio("query", "Radius", true)
-          +number("radius", 1, .1)
+          +number("p_radius", 1, .1)
         +radio("query", "KNearest")                   
-          +number("knearest", 10, 1)
+          +number("p_knearest", 10, 1)
       section
         h3 Misc
         +checkbox("visualize", "Render Data Structure", true)
