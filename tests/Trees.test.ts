@@ -2,7 +2,6 @@ import * as test from "tape"
 import * as BABYLON from "../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "../frontend/Trees/TreesUtils"
 
-
 // Setup
 const min = new BABYLON.Vector3(1, 4, 5)
 const size = new BABYLON.Vector3(2, 3, 4)

@@ -1,13 +1,16 @@
 import * as test from "tape"
 import * as BABYLON from "../node_modules/babylonjs/babylon.module"
 import { Octree, Octant } from "../frontend/Trees/Octree"
+import { TreesUtils } from "../frontend/Trees/TreesUtils"
+const FP = TreesUtils.FindingPattern
 
 const p1 = new BABYLON.Vector3(1, 4, 5)
 const p2 = new BABYLON.Vector3(2, 3, 5)
 const p3 = new BABYLON.Vector3(2, 3, 4)
 const p4 = new BABYLON.Vector3(2, 3, 4.1)
-const p5 = new BABYLON.Vector3(2, 3, 4.3)
+const p5 = new BABYLON.Vector3(2, 3, 4.9)
 const p6 = new BABYLON.Vector3(2, 3, 4.5)
+const pOut = new BABYLON.Vector3(-2, 0, -3)
 const octree = new Octree([p1, p2, p3, p4, p5, p6], { maxDepth: 2, bucketSize: 2})
 
 
@@ -21,9 +24,44 @@ test(name + "splits into 8 octants", t => {
 })
 
 test(name + "separated properly", t => {
-  //console.log(JSON.stringify(octree.children, null, "<br>  "))
   const deepChildren = octree.children[4].children
   t.equal(deepChildren.length === 8, true)
   t.equal(deepChildren[4].points.length == 2, true)
+  t.end()
+})
+
+const ray = new BABYLON.Ray(p4, p6.subtract(p4))
+const rayOut = new BABYLON.Ray(new BABYLON.Vector3(0,0,0), pOut.normalize())
+
+const cases = [
+  { name: "find none",
+    in: {pattern: FP.KNearest, ray: rayOut, options: { radius: 0 } },
+    expect: <BABYLON.Vector3[]>[] },
+  { name: "find none",
+    in: {pattern: FP.KNearest, ray: ray, options: { k: 0 } },
+    expect: <BABYLON.Vector3[]>[] },
+  { name: "find 1",
+    in: {pattern: FP.Radius, ray: ray, options: { radius: 0 } },
+    expect: <BABYLON.Vector3[]>[p2] },
+  { name: "find 1",
+    in: {pattern: FP.KNearest, ray: ray, options: { k: 1 } },
+    expect: <BABYLON.Vector3[]>[p2] },
+  { name: "find 1",
+    in: {pattern: FP.Radius, ray: ray, options: { radius: 10e-6 } },
+    expect: <BABYLON.Vector3[]>[p2] },
+  { name: "find exact",
+    in: {pattern: FP.KNearest, ray: ray, options: { k: 3 } },
+    expect: <BABYLON.Vector3[]>[p2, p5] },
+  { name: "find exact",
+    in: {pattern: FP.Radius, ray: ray, options: { radius: .1 } },
+    expect: <BABYLON.Vector3[]>[p2, p5] }
+]
+
+test(name + "picking", t => {
+  cases.forEach(testCase => {
+    const i = testCase.in
+    const result = octree.pick(i.ray, i.pattern, i.options)
+    t.deepEqual(result, testCase.expect)
+  })
   t.end()
 })

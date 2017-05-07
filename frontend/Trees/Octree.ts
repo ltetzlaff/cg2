@@ -78,8 +78,7 @@ export class Octree extends Octant implements TreesUtils.Tree {
 
   pick(ray : BABYLON.Ray, pattern : TreesUtils.FindingPattern = TreesUtils.FindingPattern.KNearest, options : any) : BABYLON.Vector3[] {
     const hitOctants = this.findHitOctants(ray)
-
-    if (!hitOctants) return
+    if (!hitOctants) return []
 
     const relevantOctants = hitOctants
       .map(octant => ({ r: octant.distanceToCenter(ray.origin), octant }))
@@ -89,21 +88,31 @@ export class Octree extends Octant implements TreesUtils.Tree {
     const candidates : BABYLON.Vector3[] = []
     let sphere : TreesUtils.Sphere
 
-    relevantOctants.forEach(octant => {
-      if (sphere) {
-        switch (pattern) {
-          case TreesUtils.FindingPattern.KNearest:
-            candidates.push(...octant.points)
-            break
-          case TreesUtils.FindingPattern.Radius:
-            candidates.push(...octant.points.filter(p => sphere.contains(p)))
-            break
-        }
-      } else {
-        sphere = new TreesUtils.Sphere(octant.points.find(p => TreesUtils.isOnLine(p, ray)), options.radius)
+    relevantOctants.some(octant => {
+      const foundInOctant = octant.points.find(p => TreesUtils.isOnLine(p, ray))
+      if (!foundInOctant) return false
+      if (!(options.radius === 0 || options.radius > 0)) {
+        options.radius = Number.MAX_VALUE
       }
+      sphere = new TreesUtils.Sphere(foundInOctant, options.radius)
+      return true      
     })
 
+    if (!sphere) {
+      return [] // no direct hit
+    }
+
+    relevantOctants.forEach(octant => {
+      switch (pattern) {
+        case TreesUtils.FindingPattern.KNearest:
+          candidates.push(...octant.points)
+          break
+        case TreesUtils.FindingPattern.Radius:
+          candidates.push(...octant.points.filter(p => sphere.contains(p)))
+          break
+      }
+    })
+    
     if (pattern == TreesUtils.FindingPattern.KNearest) {
       return candidates
         .sort((a, b) => sphere.distanceToCenter(a) - sphere.distanceToCenter(b))
