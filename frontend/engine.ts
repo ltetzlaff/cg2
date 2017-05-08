@@ -76,8 +76,6 @@ class Engine {
   visualizeTree() {
     if (!this.tree) return
     
-    const scene = this.scene
-    
     // Delete old visuals
     this.visualizeMeshes.forEach(m => m.dispose())
     this.visualizeMeshes = []
@@ -86,18 +84,7 @@ class Engine {
       return
     }
 
-    const visualize = (octant : Octant) => {
-      const s = octant.size
-      const b = BABYLON.MeshBuilder.CreateBox("octant lv" + octant.level, 
-        { width: s.x, height: s.y, depth: s.z }, scene)
-      b.setAbsolutePosition(octant.center)
-      b.material = this.visualizeMaterial
-      this.visualizeMeshes.push(b)
-
-      // recurse
-      octant.children.forEach(child => visualize(child))
-    }
-    visualize(this.tree as Octree)
+    this.tree.visualize(this.scene, this.visualizeMeshes, this.visualizeMaterial)    
     //BABYLON.SceneOptimizer.OptimizeAsync(scene, BABYLON.SceneOptimizerOptions.ModerateDegradationAllowed())
   }
 
@@ -108,13 +95,14 @@ class Engine {
       })
     })
 
-    this.octreeOpts = new OctreeOptions(getFloat($("#oBucketSize")), getFloat($("#oMaxDepth")))
+    const s = getFloat($("#pPointSize"))
+    this.octreeOpts = new OctreeOptions(getFloat($("#oBucketSize")), getFloat($("#oMaxDepth")), new BABYLON.Vector3(s,s,s))
     this.findingOptions = {
-      k: getFloat($("#p_knearest")),
-      radius: getFloat($("#p_radius"))
+      k: getFloat($("#pKNearest")),
+      radius: getFloat($("#pRadius"))
     }
-    this.findingPattern = TreesUtils.FindingPattern[getRadio("query").value]
-    this.treeClass = getRadio("search").value
+    this.findingPattern = TreesUtils.FindingPattern[getRadioValue("query")]
+    this.treeClass = getRadioValue("search")
 
     bindOnChangeNumeric("#oMaxDepth", n => {
       this.octreeOpts.maxDepth = n
@@ -124,8 +112,12 @@ class Engine {
       this.octreeOpts.bucketSize = n
       this.buildTree()
     })    
-    bindOnChangeNumeric("#p_knearest", n => this.findingOptions.k = n)
-    bindOnChangeNumeric("#p_radius", n => this.findingOptions.radius = n)
+    bindOnChangeNumeric("#pPointSize", n => {
+      this.octreeOpts.pointSize = new BABYLON.Vector3(n,n,n)
+      this.buildTree()
+    })
+    bindOnChangeNumeric("#pKNearest", n => this.findingOptions.k = n)
+    bindOnChangeNumeric("#pRadius", n => this.findingOptions.radius = n)
     bindOnChangeCheckbox("#visualize", b => {
       this.visualize = b
       this.visualizeTree()
@@ -133,6 +125,7 @@ class Engine {
 
     bindOnChangeRadio("query", s => {
       this.findingPattern = TreesUtils.FindingPattern[s]
+      console.log(this.findingPattern)
     })
 
     bindOnChangeRadio("search", s => this.treeClass = s)
@@ -148,8 +141,8 @@ class Engine {
       const ray = scene.createPickingRay(scene.pointerX, scene.pointerY, null, null)
       
       const results = this.tree.pick(ray, this.findingPattern, this.findingOptions)
-      console.log(results)
-    }) 
+      console.log("picked:", results)
+    })
   }
 
   load(file : string, asPointCloud : boolean = false) : void {
@@ -205,7 +198,8 @@ const $$ = (selector : string) => document.querySelectorAll(selector)
 const getFloat = (el : EventTarget) => parseFloat(getString(el))
 const getCheckbox = (ev : Event) => (ev.target as HTMLInputElement).checked
 const getString = (el : EventTarget) => (el as HTMLInputElement).value
-const getRadio = (name : string) => ($("input[name='" + name + "']:checked") as HTMLInputElement)
+const getRadio = (name : string) => Array.prototype.slice.call($$("input[name='" + name + "']")) as HTMLInputElement[]
+const getRadioValue = (name : string) => getRadio(name).find(el => el.checked).value
 
 function bindOnChangeNumeric(selector : string, cb : (n: number) => void) {
   ;($(selector) as HTMLInputElement).onchange = ev => cb(getFloat(ev.target))
@@ -216,7 +210,12 @@ function bindOnChangeCheckbox(selector : string, cb : (b: boolean) => void) {
 }
 
 function bindOnChangeRadio(name : string, cb : (s : string) => void) {
-  getRadio(name).onchange = ev => cb(getString(ev.target))
+  getRadio(name).forEach(el => {
+    el.onchange = ev => {
+      const i = ev.target
+      if ((i as HTMLInputElement).checked) cb(getString(i))
+    }
+  })
 }
 
 var e : Engine
