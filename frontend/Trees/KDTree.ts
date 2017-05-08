@@ -8,7 +8,11 @@ export class KDTree implements TreesUtils.Tree {
     this.children = []
   }
   
-  pick(ray : BABYLON.Ray, pattern : TreesUtils.FindingPattern = TreesUtils.FindingPattern.KNearest, options : any) : BABYLON.Vector3[] {
+  pick(ray : BABYLON.Ray, pattern : TreesUtils.FindingPattern, options : any) : TreesUtils.Box[] {
     return []
+  }
+
+  visualize(scene : BABYLON.Scene, container : BABYLON.Mesh[], mat : BABYLON.Material) : void {
+
   }
 }

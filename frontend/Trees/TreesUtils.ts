@@ -3,11 +3,17 @@ import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
 export namespace TreesUtils {
   export enum FindingPattern { KNearest, Radius }
 
+  export interface IQueryable{
+    findIntersecting(ray : BABYLON.Ray) : any
+    findIntersecting(sphere : Sphere) : any
+  }
+
   export interface Tree {
     children : any[]
 
-    pick(ray : BABYLON.Ray, pattern : FindingPattern, options : any) : BABYLON.Vector3[]
+    pick(ray : BABYLON.Ray, pattern : FindingPattern, options : any) : TreesUtils.Box[]
 
+    visualize(scene : BABYLON.Scene, container : BABYLON.Mesh[], mat : BABYLON.Material) : void
   }
 
   /** Retrieve minimum and maximum values for x,y,z out of
@@ -62,8 +68,8 @@ export namespace TreesUtils {
 
 
   export class Sphere {
-    private center : BABYLON.Vector3
-    private radius : number
+    public center : BABYLON.Vector3
+    public radius : number
 
     constructor(center : BABYLON.Vector3, radius : number) {
       this.center = center
