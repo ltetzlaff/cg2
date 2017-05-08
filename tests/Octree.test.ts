@@ -1,6 +1,6 @@
 import * as test from "tape"
 import * as BABYLON from "../node_modules/babylonjs/babylon.module"
-import { Octree, Octant } from "../frontend/Trees/Octree"
+import { Octree, Octant, OctreeOptions } from "../frontend/Trees/Octree"
 import { TreesUtils } from "../frontend/Trees/TreesUtils"
 const FP = TreesUtils.FindingPattern
 
@@ -11,7 +11,7 @@ const p4 = new BABYLON.Vector3(2, 3, 4.1)
 const p5 = new BABYLON.Vector3(2, 3, 4.9)
 const p6 = new BABYLON.Vector3(2, 3, 4.5)
 const pOut = new BABYLON.Vector3(-2, 0, -3)
-const octree = new Octree([p1, p2, p3, p4, p5, p6], { maxDepth: 2, bucketSize: 2})
+const octree = new Octree([p1, p2, p3, p4, p5, p6], new OctreeOptions(2, 2, new BABYLON.Vector3(.05, .05, .05)))
 
 
 const name = "Trees/Octree/"
@@ -25,6 +25,8 @@ test(name + "splits into 8 octants", t => {
 
 test(name + "separated properly", t => {
   const deepChildren = octree.children[4].children
+  t.isNotEqual(deepChildren, [])
+  t.equal(octree.points.length === 0, true)
   t.equal(deepChildren.length === 8, true)
   t.equal(deepChildren[4].points.length == 2, true)
   t.end()
@@ -51,7 +53,7 @@ const cases = [
     expect: <BABYLON.Vector3[]>[p2] },
   { name: "find exact",
     in: {pattern: FP.KNearest, ray: ray, options: { k: 3 } },
-    expect: <BABYLON.Vector3[]>[p2, p5] },
+    expect: <BABYLON.Vector3[]>[p2, p5, p1] },
   { name: "find exact",
     in: {pattern: FP.Radius, ray: ray, options: { radius: .1 } },
     expect: <BABYLON.Vector3[]>[p2, p5] }
@@ -61,7 +63,7 @@ test(name + "picking", t => {
   cases.forEach(testCase => {
     const i = testCase.in
     const result = octree.pick(i.ray, i.pattern, i.options)
-    t.deepEqual(result, testCase.expect)
+    t.deepEqual(result.map(p => p.center), testCase.expect)
   })
   t.end()
 })
