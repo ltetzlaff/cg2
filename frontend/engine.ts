@@ -17,11 +17,14 @@ class Engine {
   private tree : TreesUtils.Tree
   private vertices : BABYLON.Vector3[]
   private octreeOpts : OctreeOptions
+  private vertMeshes : BABYLON.Mesh[]
   private visualizeMeshes : BABYLON.Mesh[]
   private visualizeMaterial : BABYLON.Material
   private visualize : boolean
   private wfMat : BABYLON.Material
-  
+  private wfMatHighlighted : BABYLON.Material
+  private highlighted : BABYLON.Mesh[]
+
   constructor(canvas : HTMLCanvasElement) {
     this.canvas = canvas
     this.engine = new BABYLON.Engine(canvas, true)
@@ -42,7 +45,9 @@ class Engine {
     this.visualizeMeshes = []
     this.visualizeMaterial = new WireFrameMaterial(BABYLON.Color3.Green(), this.scene)
     this.visualize = true
-    this.wfMat = new WireFrameMaterial(BABYLON.Color3.Red(), this.scene)    
+    this.wfMat = new WireFrameMaterial(BABYLON.Color3.Red(), this.scene)
+    this.wfMatHighlighted = new WireFrameMaterial(BABYLON.Color3.Blue(), this.scene)
+    this.highlighted = []
 
     const ground = BABYLON.MeshBuilder.CreateGround("Ground", {
       width: 5, height: 5, subdivisions: 1
@@ -61,7 +66,7 @@ class Engine {
         // #TODO
         break
       case "Octree":
-        this.tree = new Octree(this.vertices, this.octreeOpts)
+        this.tree = new Octree(this.vertices, this.vertMeshes, this.octreeOpts)
         this.visualizeTree()
         break
       case "KDtree":
@@ -137,17 +142,29 @@ class Engine {
       if (!this.tree) return
       
       const scene = this.scene
-      console.log(scene.pointerX, scene.pointerY)
       const ray = scene.createPickingRay(scene.pointerX, scene.pointerY, null, null)
       
+      console.time("took")      
       const results = this.tree.pick(ray, this.findingPattern, this.findingOptions)
-      console.log("picked:", results)
+      console.log("picked at (" + scene.pointerX + "|" + scene.pointerY + "):", results)
+      console.timeEnd("took")
+
+      this.highlight(results.map(p => p.mesh))
     })
+  }
+
+  highlight(meshes : BABYLON.Mesh[]) {
+    // unhighlight
+    this.highlighted.forEach(m => m.material = this.wfMat)
+    
+    meshes.forEach(m => m.material = this.wfMatHighlighted)
+    this.highlighted = meshes
   }
 
   load(file : string, asPointCloud : boolean = false) : void {
     BABYLON.SceneLoader.ImportMesh(file, "/models/", file, this.scene, meshes => { 
       // Remove old meshes
+      this.scene.meshes.forEach(m => m.dispose())
       if (this.scene.meshes.length) this.scene.meshes = []
       
       if (asPointCloud) {
@@ -177,6 +194,7 @@ class Engine {
       vertMeshes[i].setAbsolutePosition(vertices[i])
       vertMeshes[i].material = mat
     }
+    this.vertMeshes = vertMeshes
 
     //scene.meshes.push(...vertMeshes) 
     this.vertices = vertices
