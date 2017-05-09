@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "postinstall": "cp node_modules/babylonjs/babylon.js node_modules/babylonjs/babylon.module.js",
+    "postinstall": "cp node_modules/babylonjs/babylon.js node_modules/babylonjs/babylon.module.js || copy node_modules\\babylonjs\\babylon.js node_modules\\babylonjs\\babylon.module.js",
     "build": "webpack --watch",
     "buildOnce": "webpack",
     "server": "nodemon server/server.js --watch .",
