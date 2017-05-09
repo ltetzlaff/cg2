@@ -10,6 +10,7 @@ export namespace TreesUtils {
 
   export interface Tree {
     children : any[]
+    points : Point[]
 
     pick(ray : BABYLON.Ray, pattern : FindingPattern, options : any) : Point[]
 

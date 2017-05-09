@@ -18,8 +18,8 @@ const DEFAULT = new OctreeOptions(5, 5, new BABYLON.Vector3(.05, .05, .05))
 export class Octant extends TreesUtils.Box implements TreesUtils.IQueryable {
   private static splitsInto = 8
   public children : Octant[]
-  public level : number
   public points : TreesUtils.Point[]
+  public level : number
   private options : OctreeOptions
 
   constructor(min : BABYLON.Vector3, size : BABYLON.Vector3, level : number, options : OctreeOptions) {

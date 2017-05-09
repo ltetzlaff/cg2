@@ -1,5 +1,6 @@
 import * as BABYLON from "../node_modules/babylonjs/babylon.module"
 import { Octree, Octant, OctreeOptions } from "./Trees/Octree"
+import { LinearTree } from "./Trees/LinearTree"
 import { TreesUtils } from "./Trees/TreesUtils"
 import "./OFFFileLoader"
 
@@ -63,19 +64,19 @@ class Engine {
     console.log(this.treeClass)
     switch (this.treeClass) {
       case "Linear":
-        // #TODO
+        this.tree = new LinearTree(this.vertices, this.vertMeshes, this.octreeOpts.pointSize)
         break
       case "Octree":
         this.tree = new Octree(this.vertices, this.vertMeshes, this.octreeOpts)
-        this.visualizeTree()
         break
       case "KDtree":
         //this.tree = new KDTree(this.vertices)
-        this.visualizeTree()        
         break
       default:
         throw new TypeError("unknown Tree to be constructed")
-    }   
+    }
+
+    this.visualizeTree()    
   }
 
   visualizeTree() {
@@ -130,10 +131,12 @@ class Engine {
 
     bindOnChangeRadio("query", s => {
       this.findingPattern = TreesUtils.FindingPattern[s]
-      console.log(this.findingPattern)
     })
 
-    bindOnChangeRadio("search", s => this.treeClass = s)
+    bindOnChangeRadio("search", s => {
+      this.treeClass = s
+      this.buildTree()
+    })
   }
 
   setupPicking() {
