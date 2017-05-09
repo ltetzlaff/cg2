@@ -35,18 +35,22 @@ export class Octant extends TreesUtils.Box implements TreesUtils.IQueryable {
     if (x instanceof BABYLON.Ray) {
       b = (x as BABYLON.Ray).intersectsBoxMinMax(this.min, this.max)
     } else if (x instanceof TreesUtils.Sphere) {
-      b = BABYLON.BoundingBox.IntersectsSphere(this.min, this.max, (x as TreesUtils.Sphere).center, (x as TreesUtils.Sphere).radius)
+      const s = x as TreesUtils.Sphere
+      b = BABYLON.BoundingBox.IntersectsSphere(this.min, this.max, s.center, s.radius)
     } else {
       throw new TypeError("Cannot find Intersection with type: " + x.constructor.name + JSON.stringify(x))
     }
-    
+
+    const ret : Octant[] = []
+
     if (b) {
-      if (this.children.length == 0) {
-        return [this]
+      if (this.children.length === 0) {
+        ret.push(this)
+      } else {
+        this.children.forEach(child => ret.push(...child.findIntersecting(x)))
       }
-      return this.children.filter(child => child.findIntersecting(x).length !== 0)
     }
-    return []
+    return ret
   }
 
 
@@ -131,7 +135,6 @@ export class Octree extends Octant implements TreesUtils.Tree {
     let candidates : TreesUtils.Point[] = []
     switch (pattern) {
       case TreesUtils.FindingPattern.KNearest:
-        console.log(options.k)
         this.findIntersecting(sphere)
           .forEach(octant => {
             candidates.push(...octant.points)
