@@ -8,7 +8,7 @@ export class KDTree implements TreesUtils.Tree {
     this.children = []
   }
   
-  pick(ray : BABYLON.Ray, pattern : TreesUtils.FindingPattern, options : any) : TreesUtils.Box[] {
+  pick(ray : BABYLON.Ray, pattern : TreesUtils.FindingPattern, options : any) : TreesUtils.Point[] {
     return []
   }
 

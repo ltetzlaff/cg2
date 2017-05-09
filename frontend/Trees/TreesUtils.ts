@@ -11,7 +11,7 @@ export namespace TreesUtils {
   export interface Tree {
     children : any[]
 
-    pick(ray : BABYLON.Ray, pattern : FindingPattern, options : any) : TreesUtils.Box[]
+    pick(ray : BABYLON.Ray, pattern : FindingPattern, options : any) : Point[]
 
     visualize(scene : BABYLON.Scene, container : BABYLON.Mesh[], mat : BABYLON.Material) : void
   }
@@ -63,6 +63,16 @@ export namespace TreesUtils {
 
     distanceToCenter(point : BABYLON.Vector3) : number {
       return point.subtract(this.center).lengthSquared()
+    }
+  }
+
+  export class Point {
+    public box : Box
+    public mesh : BABYLON.Mesh
+
+    constructor(box : Box, mesh : BABYLON.Mesh) {
+      this.box = box
+      this.mesh = mesh
     }
   }
 

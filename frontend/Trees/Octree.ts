@@ -19,7 +19,7 @@ export class Octant extends TreesUtils.Box implements TreesUtils.IQueryable {
   private static splitsInto = 8
   public children : Octant[]
   public level : number
-  public points : Array<TreesUtils.Box>
+  public points : TreesUtils.Point[]
   private options : OctreeOptions
 
   constructor(min : BABYLON.Vector3, size : BABYLON.Vector3, level : number, options : OctreeOptions) {
@@ -66,7 +66,7 @@ export class Octant extends TreesUtils.Box implements TreesUtils.IQueryable {
           const octant = new Octant(min, half, this.level + 1, this.options)
           this.children.push(octant)            
           this.points = this.points.filter(p => {
-            if (octant.contains(p.center)) {
+            if (octant.contains(p.box.center)) {
               octant.points.push(p)
               return false
             }
@@ -80,12 +80,14 @@ export class Octant extends TreesUtils.Box implements TreesUtils.IQueryable {
 }
 
 export class Octree extends Octant implements TreesUtils.Tree {
-  constructor(vertices : BABYLON.Vector3[], options : OctreeOptions = DEFAULT) {
+  constructor(vertices : BABYLON.Vector3[], vertMeshes : BABYLON.Mesh[], options : OctreeOptions = DEFAULT) {
     const { min, max } = TreesUtils.getExtents(vertices)
     super(min, max.subtract(min), 0, options)
 
     const pSize = options.pointSize || BABYLON.Vector3.Zero()
-    this.points = vertices.map(p => new TreesUtils.Box(p.subtract(pSize.scale(.5)), pSize))
+    this.points = vertices.map((p, i) => {
+      return new TreesUtils.Point(new TreesUtils.Box(p.subtract(pSize.scale(.5)), pSize), vertMeshes[i] || null)
+    })
     this.trySubdivide()
   }
 
@@ -104,7 +106,7 @@ export class Octree extends Octant implements TreesUtils.Tree {
     viz(this)
   }
 
-  pick(ray : BABYLON.Ray, pattern : TreesUtils.FindingPattern = TreesUtils.FindingPattern.KNearest, options : any) : TreesUtils.Box[] {
+  pick(ray : BABYLON.Ray, pattern : TreesUtils.FindingPattern = TreesUtils.FindingPattern.KNearest, options : any) : TreesUtils.Point[] {
     const hitOctants = this.findIntersecting(ray)
     if (!hitOctants) return [] // no octant hit
 
@@ -115,18 +117,18 @@ export class Octree extends Octant implements TreesUtils.Tree {
     
     let sphere : TreesUtils.Sphere
     startingPointOctants.some(octant => {
-      const foundInOctant = octant.points.find(p => ray.intersectsBoxMinMax(p.min,p.max))
+      const foundInOctant = octant.points.find(p => ray.intersectsBoxMinMax(p.box.min,p.box.max))
       if (!foundInOctant) return false
       if (!(options.radius === 0 || options.radius > 0)) {
         options.radius = Number.MAX_VALUE // knearest just needs a point
       }
-      sphere = new TreesUtils.Sphere(foundInOctant.center, options.radius)
+      sphere = new TreesUtils.Sphere(foundInOctant.box.center, options.radius)
       return true
     })
 
     if (!sphere) return [] // no direct box hit
 
-    let candidates : TreesUtils.Box[] = []
+    let candidates : TreesUtils.Point[] = []
     switch (pattern) {
       case TreesUtils.FindingPattern.KNearest:
         console.log(options.k)
@@ -134,14 +136,14 @@ export class Octree extends Octant implements TreesUtils.Tree {
           .forEach(octant => {
             candidates.push(...octant.points)
             candidates = candidates
-              .sort((a, b) => sphere.distanceToCenter(a.center) - sphere.distanceToCenter(b.center))
+              .sort((a, b) => sphere.distanceToCenter(a.box.center) - sphere.distanceToCenter(b.box.center))
               .slice(0, options.k)
           })
         break
       case TreesUtils.FindingPattern.Radius:
         this.findIntersecting(sphere)        
           .forEach(octant => {
-            candidates.push(...octant.points.filter(p => sphere.contains(p.center)))
+            candidates.push(...octant.points.filter(p => sphere.contains(p.box.center)))
           })
         break
     }
