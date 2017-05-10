@@ -44,19 +44,19 @@ const cases = [
     expect: <BABYLON.Vector3[]>[] },
   { name: "find 1",
     in: {pattern: FP.Radius, ray: ray, options: { radius: 0 } },
-    expect: <BABYLON.Vector3[]>[p2] },
+    expect: <BABYLON.Vector3[]>[p4] },
   { name: "find 1",
     in: {pattern: FP.KNearest, ray: ray, options: { k: 1 } },
-    expect: <BABYLON.Vector3[]>[p2] },
+    expect: <BABYLON.Vector3[]>[p4] },
   { name: "find 1",
     in: {pattern: FP.Radius, ray: ray, options: { radius: 10e-6 } },
-    expect: <BABYLON.Vector3[]>[p2] },
+    expect: <BABYLON.Vector3[]>[p4] },
   { name: "find exact",
     in: {pattern: FP.KNearest, ray: ray, options: { k: 3 } },
-    expect: <BABYLON.Vector3[]>[p2, p5, p1] },
+    expect: <BABYLON.Vector3[]>[p4, p3, p6] },
   { name: "find exact",
     in: {pattern: FP.Radius, ray: ray, options: { radius: .1 } },
-    expect: <BABYLON.Vector3[]>[p2, p5] }
+    expect: <BABYLON.Vector3[]>[p3, p4] }
 ]
 
 test(name + "picking", t => {
