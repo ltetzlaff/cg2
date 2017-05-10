@@ -95,10 +95,14 @@ class Engine {
   }
 
   setupUIBindings() {
-    const buttons = $$(".load").forEach((el : Element) => {
+    $$(".load").forEach((el : Element) => {
       el.addEventListener("click", () => {
         this.load(el.getAttribute("value") + ".off", true)
       })
+    })
+
+    bindOnChangeFile("#load", fl => {
+      this.load(fl[0].name, true)
     })
 
     const s = getFloat($("#pPointSize"))
@@ -141,17 +145,18 @@ class Engine {
 
   setupPicking() {
     // capture mouse events
-    window.addEventListener("click", () => {
+    window.addEventListener("click", (ev) => {
       if (!this.tree) return
-      
-      const scene = this.scene
-      const ray = scene.createPickingRay(scene.pointerX, scene.pointerY, null, null)
-      
-      console.time("took")      
-      const results = this.tree.pick(ray, this.findingPattern, this.findingOptions)
-      console.log("picked at (" + scene.pointerX + "|" + scene.pointerY + "):", results)
-      console.timeEnd("took")
 
+      const scene = this.scene
+      
+      if (ev.clientX > this.canvas.width - 2) return // in ui
+      const ray = scene.createPickingRay(scene.pointerX, scene.pointerY, null, null)
+      console.log("")
+      console.time("took in total")
+      const results = this.tree.pick(ray, this.findingPattern, this.findingOptions)
+      console.log("picked at (" + scene.pointerX + "|" + scene.pointerY + "):", results.length + (results.length === 1 ? " point" : " points"))
+      console.timeEnd("took in total")
       this.highlight(results.map(p => p.mesh))
     })
   }
@@ -221,6 +226,7 @@ const getCheckbox = (ev : Event) => (ev.target as HTMLInputElement).checked
 const getString = (el : EventTarget) => (el as HTMLInputElement).value
 const getRadio = (name : string) => Array.prototype.slice.call($$("input[name='" + name + "']")) as HTMLInputElement[]
 const getRadioValue = (name : string) => getRadio(name).find(el => el.checked).value
+const getFiles = (el : EventTarget) => (el as HTMLInputElement).files
 
 function bindOnChangeNumeric(selector : string, cb : (n: number) => void) {
   ;($(selector) as HTMLInputElement).onchange = ev => cb(getFloat(ev.target))
@@ -237,6 +243,10 @@ function bindOnChangeRadio(name : string, cb : (s : string) => void) {
       if ((i as HTMLInputElement).checked) cb(getString(i))
     }
   })
+}
+
+function bindOnChangeFile(selector: string, cb : (fl : FileList) => void) {
+  ;($(selector) as HTMLInputElement).onchange = ev => cb(getFiles(ev.target))
 }
 
 var e : Engine

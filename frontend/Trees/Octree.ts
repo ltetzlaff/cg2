@@ -111,6 +111,7 @@ export class Octree extends Octant implements TreesUtils.Tree {
   }
 
   pick(ray : BABYLON.Ray, pattern : TreesUtils.FindingPattern = TreesUtils.FindingPattern.KNearest, options : any) : TreesUtils.Point[] {
+    console.time("  - finding Start")
     const hitOctants = this.findIntersecting(ray)
     if (!hitOctants) return [] // no octant hit
 
@@ -129,9 +130,9 @@ export class Octree extends Octant implements TreesUtils.Tree {
       sphere = new TreesUtils.Sphere(foundInOctant.box.center, options.radius)
       return true
     })
-
+    console.timeEnd("  - finding Start")
     if (!sphere) return [] // no direct box hit
-
+    console.time("  - finding Query")
     let candidates : TreesUtils.Point[] = []
     switch (pattern) {
       case TreesUtils.FindingPattern.KNearest:
@@ -150,6 +151,7 @@ export class Octree extends Octant implements TreesUtils.Tree {
           })
         break
     }
+    console.timeEnd("  - finding Query")
     return candidates
   }
 }

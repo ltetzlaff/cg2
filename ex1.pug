@@ -33,7 +33,7 @@ mixin file(id, label)
   .file-field.input-field
     .btn
       span= label
-      input(type="file")
+      input(type="file", id= id)
     .file-path-wrapper
       input.file-path.validate(type="text")
 
@@ -58,7 +58,8 @@ html
     link(href="main.css", rel="stylesheet")
     script(src="built/frontend.js")
   body
-    canvas#c
+    #main
+      canvas#c
     #details
       section
         h3 Search
@@ -80,6 +81,6 @@ html
         +checkbox("visualize", "Render Data Structure", true)
       section
         h3 Load
-        //+file("load", "Load Model")
+        +file("load", "Load Model")
         +button("load", "teapot", "attachment")
         +button("load", "sphere", "attachment")

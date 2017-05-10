@@ -6,10 +6,14 @@ body {
   padding: 0 25px 0 0;
 }
 
+#main {
+  grid-area: main; 
+  position: relative; 
+}
+
 #c {
   width: 100%;
   height: 100%;
-  grid-area: main;  
 }
 
 #details {
