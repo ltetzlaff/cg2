@@ -45,6 +45,7 @@ export class OFFFileLoader implements BABYLON.ISceneLoaderPlugin {
 
     const parsedMesh = new BABYLON.Mesh(meshName, scene)
     vertexData.applyToMesh(parsedMesh)
+    console.log("loading complete")
     return parsedMesh
   }
 }

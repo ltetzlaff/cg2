@@ -84,12 +84,14 @@ export class Octant extends TreesUtils.Box implements TreesUtils.IQueryable {
 }
 
 export class Octree extends Octant implements TreesUtils.Tree {
-  constructor(vertices : BABYLON.Vector3[], vertMeshes : BABYLON.Mesh[], options : OctreeOptions = DEFAULT) {
+  constructor(vertices : BABYLON.Vector3[], vertMeshes : BABYLON.InstancedMesh[], options : OctreeOptions = DEFAULT) {
     const { min, max } = TreesUtils.getExtents(vertices)
     super(min, max.subtract(min), 0, options)
 
-    const pSize = options.pointSize || BABYLON.Vector3.Zero()
+    
+    const pSize = options.pointSize
     this.points = vertices.map((p, i) => {
+      vertMeshes[i].scaling = pSize
       return new TreesUtils.Point(new TreesUtils.Box(p.subtract(pSize.scale(.5)), pSize), vertMeshes[i] || null)
     })
     this.trySubdivide()

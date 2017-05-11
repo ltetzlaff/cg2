@@ -5,7 +5,7 @@ export class LinearTree implements TreesUtils.Tree {
   public children : any[]
   public points : TreesUtils.Point[]
 
-  constructor(vertices : BABYLON.Vector3[], vertMeshes : BABYLON.Mesh[], pointSize : BABYLON.Vector3= BABYLON.Vector3.Zero()) {
+  constructor(vertices : BABYLON.Vector3[], vertMeshes : BABYLON.InstancedMesh[], pointSize : BABYLON.Vector3= BABYLON.Vector3.Zero()) {
     this.children = []
 
     this.points = vertices.map((p, i) => {

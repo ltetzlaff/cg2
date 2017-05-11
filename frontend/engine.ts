@@ -18,13 +18,13 @@ class Engine {
   private tree : TreesUtils.Tree
   private vertices : BABYLON.Vector3[]
   private octreeOpts : OctreeOptions
-  private vertMeshes : BABYLON.Mesh[]
+  private vertMeshes : BABYLON.InstancedMesh[]
   private visualizeMeshes : BABYLON.Mesh[]
   private visualizeMaterial : BABYLON.Material
   private visualize : boolean
   private wfMat : BABYLON.Material
   private wfMatHighlighted : BABYLON.Material
-  private highlighted : BABYLON.Mesh[]
+  private highlighted : BABYLON.InstancedMesh[]
 
   constructor(canvas : HTMLCanvasElement) {
     this.canvas = canvas
@@ -35,8 +35,9 @@ class Engine {
     this.scene = new BABYLON.Scene(this.engine)
     this.loader = new BABYLON.AssetsManager(this.scene)
     this.cam = new BABYLON.ArcRotateCamera("Main Cam", -20, 0, 10, BABYLON.Vector3.Zero(), this.scene)
-    this.cam.upperRadiusLimit = 30
-    this.cam.lowerRadiusLimit = 2
+    this.cam.upperRadiusLimit = 10
+    this.cam.lowerRadiusLimit = .5
+    this.cam.wheelPrecision = 10
     this.cam.attachControl(this.canvas, false)
     this.sun = new BABYLON.HemisphericLight("Sun", new BABYLON.Vector3(0, 1, 0), this.scene)
 
@@ -57,7 +58,10 @@ class Engine {
 
   run() : void {
     window.addEventListener("resize", () => this.engine.resize())
-    this.engine.runRenderLoop(() => this.scene.render())
+    this.engine.runRenderLoop(() => {
+      this.scene.render()
+      this.highlighted.forEach(m => m.rotate(new BABYLON.Vector3(1,1,1), .1))
+    })
   }
 
   buildTree() {
@@ -92,6 +96,7 @@ class Engine {
 
     this.tree.visualize(this.scene, this.visualizeMeshes, this.visualizeMaterial)    
     //BABYLON.SceneOptimizer.OptimizeAsync(scene, BABYLON.SceneOptimizerOptions.ModerateDegradationAllowed())
+    //BABYLON.SceneOptimizer.OptimizeAsync(this.scene, BABYLON.SceneOptimizerOptions.ModerateDegradationAllowed())
   }
 
   setupUIBindings() {
@@ -123,7 +128,9 @@ class Engine {
       this.buildTree()
     })    
     bindOnChangeNumeric("#pPointSize", n => {
-      this.octreeOpts.pointSize = new BABYLON.Vector3(n,n,n)
+      this.octreeOpts.pointSize.x = n
+      this.octreeOpts.pointSize.y = n
+      this.octreeOpts.pointSize.z = n
       this.buildTree()
     })
     bindOnChangeNumeric("#pKNearest", n => this.findingOptions.k = n)
@@ -140,6 +147,10 @@ class Engine {
     bindOnChangeRadio("search", s => {
       this.treeClass = s
       this.buildTree()
+    })
+    window.addEventListener("keydown", ev => {
+      if (ev.keyCode == 107 || ev.keyCode == 87) this.cam.radius -= .1
+      if (ev.keyCode == 106 || ev.keyCode == 83) this.cam.radius += .1
     })
   }
 
@@ -161,11 +172,14 @@ class Engine {
     })
   }
 
-  highlight(meshes : BABYLON.Mesh[]) {
+  highlight(meshes : BABYLON.InstancedMesh[]) {
     // unhighlight
-    this.highlighted.forEach(m => m.material = this.wfMat)
-    
-    meshes.forEach(m => m.material = this.wfMatHighlighted)
+    this.highlighted.forEach(m => m.rotationQuaternion = BABYLON.Quaternion.Identity())
+    //this.highlighted.forEach(m => m.material = this.wfMat)
+    //this.highlighted.forEach(m => m.isVisible = true)
+
+    //meshes.forEach(m => m.isVisible = false)
+    //meshes.forEach(m => m.material = this.wfMatHighlighted)
     this.highlighted = meshes
   }
 
@@ -191,16 +205,18 @@ class Engine {
       throw new RangeError("Vertices array doesn't seem to consist of Vector3s")
     }
 
-    const boxOptions = { size: .05 }
     const vertCount = vertexCoordinates.length / 3
     const vertices = new Array<BABYLON.Vector3>(vertCount)
-    const vertMeshes = new Array<BABYLON.Mesh>(vertCount)
+    const vertMeshes = new Array<BABYLON.InstancedMesh>(vertCount)
+    const vertMesh = BABYLON.MeshBuilder.CreateBox("vertMesh", { size: 1 }, scene)
+    vertMesh.material = mat
+    vertMesh.isVisible = false
     for (let i = 0; i < vertCount; i++) {
       let j = i * 3
       vertices[i] = new BABYLON.Vector3(vertexCoordinates[j], vertexCoordinates[j+1], vertexCoordinates[j+2])
-      vertMeshes[i] = BABYLON.MeshBuilder.CreateBox("v" + i, boxOptions, scene)
+      vertMeshes[i] = vertMesh.createInstance("v" + i)
       vertMeshes[i].setAbsolutePosition(vertices[i])
-      vertMeshes[i].material = mat
+      vertMeshes[i]
     }
     this.vertMeshes = vertMeshes
 
