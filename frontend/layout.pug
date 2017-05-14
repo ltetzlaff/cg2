@@ -55,32 +55,7 @@ html
     script(src="node_modules/materialize-css/dist/js/materialize.min.js")
 
     //- Custom stuff
-    link(href="main.css", rel="stylesheet")
+    link(href="frontend/main.css", rel="stylesheet")
     script(src="built/frontend.js")
   body
-    #main
-      canvas#c
-    #details
-      section
-        h3 Search
-        +radio("search", "Linear")
-        +radio("search", "Octree", true)
-          +range("oBucketSize", "Bucket Size", 1, 100)
-          +range("oMaxDepth", "Max Depth", 0, 10)
-        +radio("search", "KDtree")
-          +range("kdtreeBucketSize", "Bucket Size", 1, 30)
-      section
-        h3 Query
-        +radio("query", "Radius", true)
-          +number("pRadius", "", 1, .1)
-        +radio("query", "KNearest")                   
-          +number("pKNearest", "", 10, 1)
-      section
-        h3 Misc
-        +number("pPointSize", "Point Size", .05, .01)
-        +checkbox("visualize", "Render Data Structure", true)
-      section
-        h3 Load
-        +file("load", "Load Model")
-        +button("load", "teapot", "attachment")
-        +button("load", "sphere", "attachment")
+    block content
