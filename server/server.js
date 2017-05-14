@@ -1,5 +1,5 @@
 const { readFile } = require("fs")
-const { join } = require("path")
+const { join, resolve } = require("path")
 const express = require("express")
 const logger = require("morgan")
 
@@ -22,6 +22,10 @@ e.get("/models/:file", (req, res) => {
       res.send(data)
     }
   })
+})
+
+e.get("/tests", (req, res) => {
+  res.sendFile(resolve(".", "tests", "results.html"))
 })
 
 // Start
