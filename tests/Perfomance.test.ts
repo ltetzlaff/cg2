@@ -7,6 +7,7 @@ const FP = TreesUtils.FindingPattern
 
 const name = "Trees/Octree/"
 
+/*
 window.addEventListener("DOMContentLoaded", () => {
   test(name + "octree picks faster", t => {
     const canvas = document.querySelector("#c") as HTMLCanvasElement
@@ -37,4 +38,4 @@ window.addEventListener("DOMContentLoaded", () => {
       t.end()
     })
   })
-})
+})*/

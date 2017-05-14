@@ -46,4 +46,4 @@ const tests = {
   }
 }
 
-module.exports = [ frontend, tests]
+module.exports = [ frontend/*, tests*/]
