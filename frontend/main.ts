@@ -4,6 +4,5 @@ var e : Engine
 window.addEventListener("DOMContentLoaded", () => {
   e = new Engine(document.querySelector("#c") as HTMLCanvasElement)
   e.setupUIBindings()
-  e.setupPicking()
   e.run()  
 })
