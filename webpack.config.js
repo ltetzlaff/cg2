@@ -4,7 +4,7 @@ const { ContextReplacementPlugin } = require("webpack")
 const buildPath = join(__dirname, "built")
 
 const frontend = {
-  entry: "./frontend/engine.ts",
+  entry: "./frontend/main.ts",
   output: {
     filename: "frontend.js",
     path: buildPath

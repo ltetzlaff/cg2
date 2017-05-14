@@ -4,20 +4,20 @@ import { LinearTree } from "./Trees/LinearTree"
 import { TreesUtils } from "./Trees/TreesUtils"
 import "./OFFFileLoader"
 
-class Engine {
+export class Engine {
   private canvas : HTMLCanvasElement
   private engine: BABYLON.Engine
-  private scene : BABYLON.Scene
+  public scene : BABYLON.Scene
   private loader : BABYLON.AssetsManager
   private sun: BABYLON.Light
   private cam : BABYLON.ArcRotateCamera
   
   private findingPattern : TreesUtils.FindingPattern
-  private findingOptions : any
-  private treeClass : string
-  private tree : TreesUtils.Tree
+  public findingOptions : any
+  public treeClass : string
+  public tree : TreesUtils.Tree
   private vertices : BABYLON.Vector3[]
-  private octreeOpts : OctreeOptions
+  public octreeOpts : OctreeOptions
   private vertMeshes : BABYLON.InstancedMesh[]
   private visualizeMeshes : BABYLON.Mesh[]
   private visualizeMaterial : BABYLON.Material
@@ -50,6 +50,8 @@ class Engine {
     this.wfMat = new WireFrameMaterial(BABYLON.Color3.Red(), this.scene)
     this.wfMatHighlighted = new WireFrameMaterial(BABYLON.Color3.Blue(), this.scene)
     this.highlighted = []
+    this.findingOptions = {}
+    this.octreeOpts = new OctreeOptions(0, 0, BABYLON.Vector3.Zero())
 
     const ground = BABYLON.MeshBuilder.CreateGround("Ground", {
       width: 5, height: 5, subdivisions: 1
@@ -111,11 +113,12 @@ class Engine {
     })
 
     const s = getFloat($("#pPointSize"))
-    this.octreeOpts = new OctreeOptions(getFloat($("#oBucketSize")), getFloat($("#oMaxDepth")), new BABYLON.Vector3(s,s,s))
-    this.findingOptions = {
-      k: getFloat($("#pKNearest")),
-      radius: getFloat($("#pRadius"))
-    }
+    this.octreeOpts.bucketSize = getFloat($("#oBucketSize"))
+    this.octreeOpts.maxDepth = getFloat($("#oMaxDepth"))
+    this.octreeOpts.pointSize = new BABYLON.Vector3(s,s,s)
+    this.findingOptions.k = getFloat($("#pKNearest"))
+    this.findingOptions.radius = getFloat($("#pRadius"))
+    
     this.findingPattern = TreesUtils.FindingPattern[getRadioValue("query")]
     this.treeClass = getRadioValue("search")
 
@@ -160,11 +163,12 @@ class Engine {
       if (!this.tree) return
 
       const scene = this.scene
-      
+            
       if (ev.clientX > this.canvas.width - 2) return // in ui
       const ray = scene.createPickingRay(scene.pointerX, scene.pointerY, null, null)
       console.log("")
       console.time("took in total")
+      //console.log(JSON.stringify(ray))
       const results = this.tree.pick(ray, this.findingPattern, this.findingOptions)
       console.log("picked at (" + scene.pointerX + "|" + scene.pointerY + "):", results.length + (results.length === 1 ? " point" : " points"))
       console.timeEnd("took in total")
@@ -184,7 +188,7 @@ class Engine {
   }
 
   load(file : string, asPointCloud : boolean = false) : void {
-    BABYLON.SceneLoader.ImportMesh(file, "/models/", file, this.scene, meshes => { 
+    BABYLON.SceneLoader.ImportMesh(file, "/models/", file, this.scene, (meshes : BABYLON.AbstractMesh[]) => { 
       // Remove old meshes
       this.scene.meshes.forEach(m => m.dispose())
       if (this.scene.meshes.length) this.scene.meshes = []
@@ -236,11 +240,11 @@ class WireFrameMaterial extends BABYLON.StandardMaterial {
 }
 
 const $  = (selector : string) => document.querySelector(selector)
-const $$ = (selector : string) => document.querySelectorAll(selector)
+const $$ = (selector : string) => Array.prototype.slice.call(document.querySelectorAll(selector))
 const getFloat = (el : EventTarget) => parseFloat(getString(el))
 const getCheckbox = (ev : Event) => (ev.target as HTMLInputElement).checked
 const getString = (el : EventTarget) => (el as HTMLInputElement).value
-const getRadio = (name : string) => Array.prototype.slice.call($$("input[name='" + name + "']")) as HTMLInputElement[]
+const getRadio = (name : string) =>$$("input[name='" + name + "']") as HTMLInputElement[]
 const getRadioValue = (name : string) => getRadio(name).find(el => el.checked).value
 const getFiles = (el : EventTarget) => (el as HTMLInputElement).files
 
@@ -264,11 +268,3 @@ function bindOnChangeRadio(name : string, cb : (s : string) => void) {
 function bindOnChangeFile(selector: string, cb : (fl : FileList) => void) {
   ;($(selector) as HTMLInputElement).onchange = ev => cb(getFiles(ev.target))
 }
-
-var e : Engine
-window.addEventListener("DOMContentLoaded", () => {
-  e = new Engine(document.querySelector("#c") as HTMLCanvasElement)
-  e.setupUIBindings()
-  e.setupPicking()
-  e.run()  
-})

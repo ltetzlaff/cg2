@@ -91,7 +91,7 @@ export class Octree extends Octant implements TreesUtils.Tree {
     
     const pSize = options.pointSize
     this.points = vertices.map((p, i) => {
-      vertMeshes[i].scaling = pSize
+      if (vertMeshes[i]) vertMeshes[i].scaling = pSize
       return new TreesUtils.Point(new TreesUtils.Box(p.subtract(pSize.scale(.5)), pSize), vertMeshes[i] || null)
     })
     this.trySubdivide()
