@@ -1,0 +1,16 @@
+extends layout.pug
+
+block content
+  #main
+    canvas#c
+  #details
+    section
+      h3 Grid
+      +number("pResolution", "Resolution", .05, .01)
+      +number("pRadius", "Wendland Radius", .05, .01)
+      +number("pSubdivisions", "Subdivisions", 0, 1)
+    section
+      h3 Load
+      +file("load", "Load Model")
+      +button("load", "franke4", "attachment")
+      +button("load", "franke5", "attachment")
