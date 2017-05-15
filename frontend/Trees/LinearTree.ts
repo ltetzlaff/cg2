@@ -1,7 +1,8 @@
 import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "./TreesUtils"
+import { Tree } from "./Tree"
 
-export class LinearTree implements TreesUtils.Tree {
+export class LinearTree implements Tree {
   public children : any[]
   public points : TreesUtils.Point[]
 
@@ -17,10 +18,14 @@ export class LinearTree implements TreesUtils.Tree {
     const startingPoint = this.points.find(p => ray.intersectsBoxMinMax(p.box.min,p.box.max))
     if (!startingPoint) return []
     
+    this.query(startingPoint.box.center, pattern, options)
+  }
+
+  query(startingPoint : BABYLON.Vector3, pattern : TreesUtils.FindingPattern, options : any) : TreesUtils.Point[] {
     if (!(options.radius === 0 || options.radius > 0)) {
       options.radius = Number.MAX_VALUE // knearest just needs a point
     }
-    const sphere = new TreesUtils.Sphere(startingPoint.box.center, options.radius)
+    const sphere = new TreesUtils.Sphere(startingPoint, options.radius)
 
     switch (pattern) {
       case TreesUtils.FindingPattern.KNearest:

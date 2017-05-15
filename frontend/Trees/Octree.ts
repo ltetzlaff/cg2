@@ -1,5 +1,6 @@
 import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "./TreesUtils"
+import { Tree } from "./Tree"
 
 export class OctreeOptions {
   public bucketSize : number
@@ -83,7 +84,7 @@ export class Octant extends TreesUtils.Box implements TreesUtils.IQueryable {
   }
 }
 
-export class Octree extends Octant implements TreesUtils.Tree {
+export class Octree extends Octant implements Tree {
   constructor(vertices : BABYLON.Vector3[], vertMeshes : BABYLON.InstancedMesh[], options : OctreeOptions = DEFAULT) {
     const { min, max } = TreesUtils.getExtents(vertices)
     super(min, max.subtract(min), 0, options)
@@ -112,7 +113,7 @@ export class Octree extends Octant implements TreesUtils.Tree {
     viz(this)
   }
 
-  pick(ray : BABYLON.Ray, pattern : TreesUtils.FindingPattern = TreesUtils.FindingPattern.KNearest, options : any) : TreesUtils.Point[] {
+  pick(ray : BABYLON.Ray, pattern : TreesUtils.FindingPattern, options : any) : TreesUtils.Point[] {
     console.time("  - finding Start")
     const hitOctants = this.findIntersecting(ray)
     if (!hitOctants) return [] // no octant hit
@@ -122,18 +123,25 @@ export class Octree extends Octant implements TreesUtils.Tree {
       .sort((o1, o2) => o1.r - o2.r)
       .map(o => o.octant)
     
-    let sphere : TreesUtils.Sphere
+    let startingPoint : BABYLON.Vector3
     startingPointOctants.some(octant => {
       const foundInOctant = octant.points.find(p => ray.intersectsBoxMinMax(p.box.min,p.box.max))
       if (!foundInOctant) return false
-      if (!(options.radius === 0 || options.radius > 0)) {
-        options.radius = Number.MAX_VALUE // knearest just needs a point
-      }
-      sphere = new TreesUtils.Sphere(foundInOctant.box.center, options.radius)
+      startingPoint = foundInOctant.box.center
       return true
     })
     console.timeEnd("  - finding Start")
-    if (!sphere) return [] // no direct box hit
+    if (!startingPoint) return [] // no direct box hit
+    return this.query(startingPoint, pattern, options)
+  }
+
+  query(startingPoint : BABYLON.Vector3, pattern : TreesUtils.FindingPattern, options : any) : TreesUtils.Point[] {
+    if (!(options.radius === 0 || options.radius > 0)) {
+      options.radius = Number.MAX_VALUE // knearest just needs a point
+    }
+    
+    const sphere = new TreesUtils.Sphere(startingPoint, options.radius)
+    
     console.time("  - finding Query")
     let candidates : TreesUtils.Point[] = []
     switch (pattern) {

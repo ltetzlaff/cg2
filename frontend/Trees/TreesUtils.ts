@@ -8,15 +8,6 @@ export namespace TreesUtils {
     findIntersecting(sphere : Sphere) : any
   }
 
-  export interface Tree {
-    children : any[]
-    points : Point[]
-
-    pick(ray : BABYLON.Ray, pattern : FindingPattern, options : any) : Point[]
-
-    visualize(scene : BABYLON.Scene, container : BABYLON.Mesh[], mat : BABYLON.Material) : void
-  }
-
   /** Retrieve minimum and maximum values for x,y,z out of
    * @param {Array<Array<Number>[3]>} points
    */

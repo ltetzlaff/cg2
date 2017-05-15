@@ -1,7 +1,9 @@
 import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "./TreesUtils"
+import { Tree } from "./Tree"
 
-export class KDTree implements TreesUtils.Tree {
+
+export class KDTree implements Tree {
   public children : any[]
   public points : TreesUtils.Point[]
   
@@ -13,6 +15,10 @@ export class KDTree implements TreesUtils.Tree {
     })
   }
   
+  query(startingPoint : BABYLON.Vector3, pattern : TreesUtils.FindingPattern, options : any) : TreesUtils.Point[] {
+    return []
+  }
+
   pick(ray : BABYLON.Ray, pattern : TreesUtils.FindingPattern, options : any) : TreesUtils.Point[] {
     return []
   }
