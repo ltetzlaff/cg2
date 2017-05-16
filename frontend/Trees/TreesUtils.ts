@@ -14,7 +14,7 @@ export namespace TreesUtils {
   export function getExtents(points : BABYLON.Vector3[]) {
     const max = new BABYLON.Vector3(-Infinity, -Infinity, -Infinity)
     const min = new BABYLON.Vector3( Infinity,  Infinity,  Infinity)
-    
+
     for (let i = 0, len = points.length; i < len; i++) {
       const v = points[i]
       ;["x", "y", "z"].forEach(d => {
@@ -36,13 +36,13 @@ export namespace TreesUtils {
     public max : BABYLON.Vector3
     public size : BABYLON.Vector3
     public center : BABYLON.Vector3
-    
+
     constructor(min : BABYLON.Vector3, size : BABYLON.Vector3) {
       this.max = min.add(size)
       this.min = min
       this.size = size
-      this.center = min.add(size.scale(.5)) 
-    } 
+      this.center = min.add(size.scale(.5))
+    }
 
     contains(p : BABYLON.Vector3) : boolean {
       // max - point >= min
