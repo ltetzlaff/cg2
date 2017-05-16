@@ -1,18 +1,9 @@
 import * as BABYLON from "../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "./Trees/TreesUtils"
+import { Tree } from "./Trees/Tree"
+import { Octree, OctreeOptions } from "./Trees/Octree"
+import { Grid, GridOptions, Surface } from "./Surface"
 import "./OFFFileLoader"
-
-class GridOptions {
-  public resolution : number
-  public radius : number
-  public subdivisions : number
-
-  constructor() {
-    this.resolution = 1
-    this.radius = 1
-    this.subdivisions = 0
-  }
-}
 
 export class Engine {
   private canvas : HTMLCanvasElement
@@ -22,12 +13,17 @@ export class Engine {
   private sun: BABYLON.Light
   private cam : BABYLON.ArcRotateCamera
 
+  private pSize : BABYLON.Vector3
+  private tree : Tree
+  private octreeOptions : OctreeOptions
   private vertices : BABYLON.Vector3[]
   private vertMeshes : BABYLON.InstancedMesh[]
-  private wfMat : BABYLON.Material
-  private wfMatGrid : BABYLON.Material
+  private pointMat : BABYLON.Material
+  private gridMat : BABYLON.Material
+  private surfaceMat : BABYLON.Material
   private gridOptions : GridOptions
-  private grid : BABYLON.Mesh
+  private grid : Grid
+  private surface : Surface
 
   constructor(canvas : HTMLCanvasElement) {
     this.canvas = canvas
@@ -45,8 +41,13 @@ export class Engine {
     this.sun = new BABYLON.HemisphericLight("Sun", new BABYLON.Vector3(0, 1, 0), this.scene)
 
     this.vertices = []
-    this.wfMat = new WireFrameMaterial(BABYLON.Color3.Red(), this.scene)
-    this.wfMatGrid = new WireFrameMaterial(BABYLON.Color3.Blue(), this.scene)
+    this.pointMat = new WireFrameMaterial(BABYLON.Color3.Red(), this.scene)
+    this.gridMat = new WireFrameMaterial(BABYLON.Color3.Blue(), this.scene)
+    this.surfaceMat = new WireFrameMaterial(BABYLON.Color3.Green(), this.scene)
+
+    const s = .01
+    this.pSize = new BABYLON.Vector3(s,s,s)
+    this.octreeOptions = new OctreeOptions(60, 5, this.pSize)
     this.gridOptions = new GridOptions()
 
     const ground = BABYLON.MeshBuilder.CreateGround("Ground", {
@@ -71,68 +72,65 @@ export class Engine {
     this.gridOptions.resolution = getFloat($("#pResolution"))
     bindOnChangeNumeric("#pResolution", n => {
       this.gridOptions.resolution = n
+      this.buildSurface()
+    })
+    this.gridOptions.radius = getFloat($("#pRadius"))
+    bindOnChangeNumeric("#pRadius", n => {
+      this.gridOptions.radius = n
+      this.buildSurface()
+    })
+    this.gridOptions.subdivisions = getFloat($("#pSubdivisions"))
+    bindOnChangeNumeric("#pSubdivisions", n => {
+      this.gridOptions.subdivisions = n
     })
 
     bindOnChangeFile("#load", fl => {
       this.load(fl[0].name, true)
     })
-    
+
     window.addEventListener("keydown", ev => {
-      if (ev.keyCode == 107 || ev.keyCode == 87) this.cam.radius -= .1
-      if (ev.keyCode == 106 || ev.keyCode == 83) this.cam.radius += .1
+      if (ev.keyCode == 107 || ev.keyCode == 87) this.cam.radius -= .1 // num+, w
+      if (ev.keyCode == 106 || ev.keyCode == 83) this.cam.radius += .1 // num-, s
+      if (ev.keyCode == 65) this.cam.alpha += .1 // a
+      if (ev.keyCode == 68) this.cam.alpha -= .1 // d
     })
+  }
+
+  buildTree() {
+    this.tree = new Octree(this.vertices, this.vertMeshes, this.octreeOptions)
   }
 
   buildSurface() {
     const { min, max } = TreesUtils.getExtents(this.vertices)
-    max.y = min.y
-    
-    const xDist = max.x - min.x
-    const xCount = Math.floor(xDist/this.gridOptions.resolution)
-    const xResolution = xDist/xCount
-    
-    const zDist = max.z - min.z
-    const zCount = Math.floor(zDist/this.gridOptions.resolution)
-    const zResolution = zDist/zCount
 
-    if (this.grid) this.grid.dispose()
-    const plane = BABYLON.MeshBuilder.CreateTiledGround("grid", {
-      xmin: min.x, xmax: max.x,
-      zmin: min.z, zmax: max.z,
-      subdivisions: { w: xCount, h: zCount }
-    }, this.scene)
-    plane.material = this.wfMatGrid
-    this.grid = plane
+    if (this.grid) this.grid.destroy()
+    this.grid = new Grid(min, max, this.gridOptions)
+    this.grid.visualize(this.scene, this.gridMat)
 
-    for (let x = 0; x < xCount; x++) {
-      for (let z = 0; z < zCount; z++) {
-        /*
-          min.x + x*xResolution,
-          min.y,
-          min.z + z*zResolution
-        */
-      }
-    }
+    if (this.surface) this.surface.destroy()
+    this.surface = new Surface(this.tree, this.grid)
+    console.log(this.surface)
+    this.surface.visualize(this.scene, this.surfaceMat)
   }
 
   load(file : string, asPointCloud : boolean = false) : void {
-    BABYLON.SceneLoader.ImportMesh(file, "/models/", file, this.scene, (meshes : BABYLON.AbstractMesh[]) => { 
+    BABYLON.SceneLoader.ImportMesh(file, "/models/", file, this.scene, (meshes : BABYLON.AbstractMesh[]) => {
       // Remove old meshes
       this.scene.meshes.forEach(m => m.dispose())
       if (this.scene.meshes.length) this.scene.meshes = []
-      
+
       if (asPointCloud) {
-        this.convertToPointCloud(meshes[0], this.scene, this.wfMat)
+        this.convertToPointCloud(meshes[0], this.scene, this.pointMat)
       } else {
-        meshes[0].material = this.wfMat
+        meshes[0].material = this.pointMat
         this.scene.meshes.push(meshes[0])
-      }      
+      }
     })
   }
 
   convertToPointCloud(mesh : BABYLON.AbstractMesh, scene : BABYLON.Scene, mat : BABYLON.Material) {
     const vertexCoordinates = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind)
-        
+
     if (vertexCoordinates.length % 3 !== 0) {
       throw new RangeError("Vertices array doesn't seem to consist of Vector3s")
     }
@@ -143,18 +141,18 @@ export class Engine {
     const vertMesh = BABYLON.MeshBuilder.CreateBox("vertMesh", { size: 1 }, scene)
     vertMesh.material = mat
     vertMesh.isVisible = false
-    const s = .01
     for (let i = 0; i < vertCount; i++) {
       let j = i * 3
       vertices[i] = new BABYLON.Vector3(vertexCoordinates[j], vertexCoordinates[j+1], vertexCoordinates[j+2])
       vertMeshes[i] = vertMesh.createInstance("v" + i)
       vertMeshes[i].setAbsolutePosition(vertices[i])
-      vertMeshes[i].scaling = new BABYLON.Vector3(s,s,s)
+      vertMeshes[i].scaling = this.pSize
     }
     this.vertMeshes = vertMeshes
 
-    //scene.meshes.push(...vertMeshes) 
+    //scene.meshes.push(...vertMeshes)
     this.vertices = vertices
+    this.buildTree()
     this.buildSurface()
   }
 }
