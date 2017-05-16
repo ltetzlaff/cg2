@@ -3,16 +3,32 @@ import { TreesUtils } from "./Trees/TreesUtils"
 import { Tree } from "./Trees/Tree"
 import * as math from "mathjs"
 
+export enum Level {
+  Min, Max, Average
+}
+
 export class GridOptions {
   public resolution : number
   public subdivisions : number
+
+  public findingPattern : TreesUtils.FindingPattern
   public radius : number
-  public plane : BABYLON.Mesh
+  public k : number
+
+  public wendlandRadius : number
+  public yLevel : Level
+  public clamp : boolean
 
   constructor() {
     this.resolution = 1
     this.subdivisions = 1
+
     this.radius = .1
+    this.k = 1
+
+    this.wendlandRadius = .2
+    this.yLevel = Level.Min
+    this.clamp = false
   }
 }
 
@@ -24,22 +40,33 @@ export class Grid {
   public zCount : number
   public xResolution : number
   public zResolution : number
+  private yAverage : number
   private plane : BABYLON.Mesh
+  public yPosition : number
 
   constructor(min : BABYLON.Vector3, max : BABYLON.Vector3, gridOptions : GridOptions) {
     this.gridOptions = gridOptions
-
-    max.y = min.y
     this.min = min
     this.max = max
 
-    const xDist = max.x - min.x
-    this.xCount = Math.floor(xDist/gridOptions.resolution)
-    this.xResolution = xDist/this.xCount
+    const diff = max.subtract(min)
+    this.xCount = Math.floor(diff.x/gridOptions.resolution)
+    this.xResolution = diff.x/this.xCount
 
-    const zDist = max.z - min.z
-    this.zCount = Math.floor(zDist/gridOptions.resolution)
-    this.zResolution = zDist/this.zCount
+    this.zCount = Math.floor(diff.z/gridOptions.resolution)
+    this.zResolution = diff.z/this.zCount
+
+    this.yAverage = min.y + diff.y/2
+    this.yPosition = this.getYPosition()
+  }
+
+  getYPosition() : number {
+    switch (this.gridOptions.yLevel) {
+      case Level.Min: return this.min.y
+      case Level.Max: return this.max.y
+      case Level.Average: return this.yAverage
+      default: throw new RangeError()
+    }
   }
 
   visualize(scene : BABYLON.Scene, material : BABYLON.Material) {
@@ -48,6 +75,7 @@ export class Grid {
       zmin: this.min.z, zmax: this.max.z,
       subdivisions: { w: this.xCount, h: this.zCount }
     }, scene)
+    plane.position.y = this.yPosition
     plane.material = material
     this.plane = plane
   }
@@ -64,18 +92,18 @@ export class Surface {
   private cubePrefab : BABYLON.Mesh
 
   constructor(tree : Tree, grid : Grid) {
+    console.time("-- built Surface in:")
     this.points = []
     this.pointMeshes = []
     for (let gx = 0; gx < grid.xCount; gx++) {
       for (let gz = 0; gz < grid.zCount; gz++) {
         const gridPoint = new BABYLON.Vector3(
           grid.min.x + gx * grid.xResolution,
-          grid.min.y,
+          grid.yPosition,
           grid.min.z + gz * grid.zResolution)
-        const nearbyPoints = tree.query(
-          gridPoint,
-          TreesUtils.FindingPattern.Radius,
-          { radius: grid.gridOptions.radius })
+        const { findingPattern, k, radius, clamp } = grid.gridOptions
+        const nearbyPoints = tree.query(gridPoint, findingPattern,
+          { k, radius })
 
         const dims = 6
         let m = math.zeros(dims, dims)
@@ -85,7 +113,7 @@ export class Surface {
 
         nearbyPoints.forEach(nearbyBox => {
           const p = nearbyBox.box.center
-          const weight = Surface.wendland(gridPoint, p, grid.gridOptions.radius)
+          const weight = Surface.wendland(gridPoint, p, grid.gridOptions.wendlandRadius)
 
           // add weighted systemMatrix
           m = math.add(m, math.multiply(Surface.Matrix(p.x, p.z), weight)) as number[][]
@@ -94,17 +122,13 @@ export class Surface {
 
         const {x, z} = gridPoint
         const vector = Surface.Vector(x, z)
-        try {
-          const coeffs = math.multiply(math.inv(m), v) as number[]
-          const y = math.dot(vector, coeffs)
-          this.points.push(new BABYLON.Vector3(x, y, z))
-        } catch(e) { // #debug
-          console.log(nearbyPoints.length, e)
-        }
-
+        const coeffs = math.multiply(math.inv(m), v) as number[]
+        const y = math.dot(vector, coeffs)
+        if (clamp && (y < grid.min.y || y > grid.max.y)) continue
+        this.points.push(new BABYLON.Vector3(x, y, z))
       }
     }
-    console.log(this.points)
+    console.timeEnd("-- built Surface in:")
   }
 
   destroy() {
