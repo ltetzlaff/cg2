@@ -2,7 +2,7 @@ import * as BABYLON from "../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "./Trees/TreesUtils"
 import { Tree } from "./Trees/Tree"
 import { Octree, OctreeOptions } from "./Trees/Octree"
-import { Grid, GridOptions, Surface } from "./Surface"
+import { Grid, GridOptions, Surface, Level } from "./Surface"
 import "./OFFFileLoader"
 
 export class Engine {
@@ -33,7 +33,7 @@ export class Engine {
     // Setup Scene
     this.scene = new BABYLON.Scene(this.engine)
     this.loader = new BABYLON.AssetsManager(this.scene)
-    this.cam = new BABYLON.ArcRotateCamera("Main Cam", -20, 0, 10, BABYLON.Vector3.Zero(), this.scene)
+    this.cam = new BABYLON.ArcRotateCamera("Main Cam", -18.1, 1.1, 4.3, BABYLON.Vector3.Zero(), this.scene)
     this.cam.upperRadiusLimit = 10
     this.cam.lowerRadiusLimit = .5
     this.cam.wheelPrecision = 10
@@ -69,19 +69,58 @@ export class Engine {
       })
     })
 
-    this.gridOptions.resolution = getFloat($("#pResolution"))
-    bindOnChangeNumeric("#pResolution", n => {
-      this.gridOptions.resolution = n
+    let sel = ""
+    const go = this.gridOptions
+
+    sel = "#pResolution"
+    go.resolution = getFloat($(sel))
+    bindOnChangeNumeric(sel, n => {
+      go.resolution = n
       this.buildSurface()
     })
-    this.gridOptions.radius = getFloat($("#pRadius"))
-    bindOnChangeNumeric("#pRadius", n => {
-      this.gridOptions.radius = n
+    sel = "#pWendlandRadius"
+    go.radius = getFloat($(sel))
+    bindOnChangeNumeric(sel, n => {
+      go.wendlandRadius = n
       this.buildSurface()
     })
-    this.gridOptions.subdivisions = getFloat($("#pSubdivisions"))
-    bindOnChangeNumeric("#pSubdivisions", n => {
-      this.gridOptions.subdivisions = n
+    sel = "#pSubdivisions"
+    go.subdivisions = getFloat($(sel))
+    bindOnChangeNumeric(sel, n => go.subdivisions = n)
+
+    sel = "query"
+    go.findingPattern = TreesUtils.FindingPattern[getRadioValue(sel)]
+    bindOnChangeRadio(sel, s => {
+      go.findingPattern = TreesUtils.FindingPattern[s]
+      this.buildSurface()
+    })
+
+    sel = "yLevel"
+    go.yLevel = Level[getRadioValue(sel)]
+    bindOnChangeRadio(sel, s => {
+      go.yLevel = Level[s]
+      this.buildSurface()
+    })
+
+    sel = "#pKNearest"
+    go.k = getFloat($(sel)) | 0
+    bindOnChangeNumeric(sel, n => {
+      go.k = n | 0
+      this.buildSurface()
+    })
+
+    sel = "#pRadius"
+    go.radius = getFloat($(sel))
+    bindOnChangeNumeric(sel, n => {
+      go.radius = n
+      this.buildSurface()
+    })
+
+    sel = "#pClamp"
+    go.clamp = getCheckbox($(sel))
+    bindOnChangeCheckbox(sel, b => {
+      go.clamp = b
+      this.buildSurface()
     })
 
     bindOnChangeFile("#load", fl => {
@@ -89,8 +128,10 @@ export class Engine {
     })
 
     window.addEventListener("keydown", ev => {
-      if (ev.keyCode == 107 || ev.keyCode == 87) this.cam.radius -= .1 // num+, w
-      if (ev.keyCode == 106 || ev.keyCode == 83) this.cam.radius += .1 // num-, s
+      if (ev.keyCode == 107 || ev.keyCode == 81) this.cam.radius -= .1 // num+, q
+      if (ev.keyCode == 106 || ev.keyCode == 69) this.cam.radius += .1 // num-, e
+      if (ev.keyCode == 87) this.cam.beta += .1 // w
+      if (ev.keyCode == 83) this.cam.beta -= .1 // s
       if (ev.keyCode == 65) this.cam.alpha += .1 // a
       if (ev.keyCode == 68) this.cam.alpha -= .1 // d
     })
@@ -101,6 +142,7 @@ export class Engine {
   }
 
   buildSurface() {
+    if (!this.vertices || this.vertices.length === 0) return
     const { min, max } = TreesUtils.getExtents(this.vertices)
 
     if (this.grid) this.grid.destroy()
@@ -109,7 +151,6 @@ export class Engine {
 
     if (this.surface) this.surface.destroy()
     this.surface = new Surface(this.tree, this.grid)
-    console.log(this.surface)
     this.surface.visualize(this.scene, this.surfaceMat)
   }
 
@@ -169,7 +210,7 @@ class WireFrameMaterial extends BABYLON.StandardMaterial {
 const $  = (selector : string) => document.querySelector(selector)
 const $$ = (selector : string) => Array.prototype.slice.call(document.querySelectorAll(selector))
 const getFloat = (el : EventTarget) => parseFloat(getString(el))
-const getCheckbox = (ev : Event) => (ev.target as HTMLInputElement).checked
+const getCheckbox = (el : EventTarget) => (el as HTMLInputElement).checked
 const getString = (el : EventTarget) => (el as HTMLInputElement).value
 const getRadio = (name : string) =>$$("input[name='" + name + "']") as HTMLInputElement[]
 const getRadioValue = (name : string) => getRadio(name).find(el => el.checked).value
@@ -180,7 +221,7 @@ function bindOnChangeNumeric(selector : string, cb : (n: number) => void) {
 }
 
 function bindOnChangeCheckbox(selector : string, cb : (b: boolean) => void) {
-  ;($(selector) as HTMLInputElement).onchange = ev => cb(getCheckbox(ev))
+  ;($(selector) as HTMLInputElement).onchange = ev => cb(getCheckbox(ev.target))
 }
 
 function bindOnChangeRadio(name : string, cb : (s : string) => void) {
