@@ -16,10 +16,12 @@
   "author": "lt",
   "license": "MIT",
   "dependencies": {
+    "@types/mathjs": "0.0.34",
     "babylonjs": "^3.0.0-alpha",
     "express": "^4.15.2",
     "jquery": "^3.2.1",
     "materialize-css": "^0.98.2",
+    "mathjs": "^3.13.1",
     "morgan": "^1.8.1",
     "pug": "^2.0.0-beta.12"
   },
