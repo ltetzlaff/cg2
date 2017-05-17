@@ -7,29 +7,54 @@ export enum Level {
   Min, Max, Average
 }
 
+function PointCloudToVertexData(grid : Grid, points : BABYLON.Vector3[]) : BABYLON.VertexData {
+  // Indices
+  const faces : BABYLON.IndicesArray = []
+  const { xCount, zCount } = grid
+  for (let x = 0; x < xCount - 1; x++) {
+    const row = x * zCount
+    for (let z = 0; z < zCount - 1; z++) {
+      // current gridCell goes +1 in x and z
+      const pointX0 = row + z
+      const pointZ0 = pointX0 + 1
+      const pointX1 = pointX0 + zCount
+      const pointZ1 = pointX1 + 1
+      faces.push(...[pointX0, pointZ0, pointX1])
+      faces.push(...[pointZ0, pointX1, pointZ1])
+    }
+  }
+
+  // Vertices
+  const len = points.length
+  const vertices = new Float32Array(len * 3)
+  for (let i = 0, j = 0; i < len; i++, j += 3) {
+    //points[i].toArray(vertices, j)
+    const p = points[i]
+    vertices[j] = p.x
+    vertices[j+1] = p.y
+    vertices[j+2] = p.z
+  }
+
+  // Merge
+  const vertexData = new BABYLON.VertexData()
+  vertexData.positions = vertices
+  vertexData.indices = faces
+  return vertexData
+}
+
 export class GridOptions {
-  public resolution : number
-  public subdivisions : number
+  public resolution = 1
+  public subdivisions = 1
 
   public findingPattern : TreesUtils.FindingPattern
-  public radius : number
-  public k : number
+  public radius = .1
+  public k = 1
+  public buildSurface = false
 
-  public wendlandRadius : number
-  public yLevel : Level
-  public clamp : boolean
-
-  constructor() {
-    this.resolution = 1
-    this.subdivisions = 1
-
-    this.radius = .1
-    this.k = 1
-
-    this.wendlandRadius = .2
-    this.yLevel = Level.Min
-    this.clamp = false
-  }
+  public wendlandRadius = .2
+  public yLevel = Level.Min
+  public clamp = false
+  public buildMesh = false
 }
 
 export class Grid {
@@ -92,16 +117,19 @@ export class Surface {
   private cubePrefab : BABYLON.Mesh
 
   constructor(tree : Tree, grid : Grid) {
-    console.time("-- built Surface in:")
     this.points = []
     this.pointMeshes = []
+
+    const { findingPattern, k, radius, clamp, wendlandRadius } = grid.gridOptions
+
     for (let gx = 0; gx < grid.xCount; gx++) {
       for (let gz = 0; gz < grid.zCount; gz++) {
         const gridPoint = new BABYLON.Vector3(
           grid.min.x + gx * grid.xResolution,
           grid.yPosition,
           grid.min.z + gz * grid.zResolution)
-        const { findingPattern, k, radius, clamp } = grid.gridOptions
+
+        const {x, z} = gridPoint
         const nearbyPoints = tree.query(gridPoint, findingPattern,
           { k, radius })
 
@@ -109,37 +137,58 @@ export class Surface {
         let m = math.zeros(dims, dims)
         let v = math.zeros(dims)
 
-        if (nearbyPoints.length <= 1) continue // this would result in det(m) === 0 and therefore inv(m) breaks
+        if (nearbyPoints.length <= 1) {
+          // this would result in det(m) === 0 and therefore inv(m) breaks
+          const defaultP = new BABYLON.Vector3(x, grid.min.y, z)
+          this.points.push(defaultP)
+          continue
+        }
 
         nearbyPoints.forEach(nearbyBox => {
           const p = nearbyBox.box.center
-          const weight = Surface.wendland(gridPoint, p, grid.gridOptions.wendlandRadius)
+          const weight = Surface.wendland(gridPoint, p, wendlandRadius)
 
           // add weighted systemMatrix
           m = math.add(m, math.multiply(Surface.Matrix(p.x, p.z), weight)) as number[][]
           v = math.add(v, math.multiply(Surface.Vector(p.x, p.z), p.y * weight)) as number[]
         })
 
-        const {x, z} = gridPoint
         const vector = Surface.Vector(x, z)
         const coeffs = math.multiply(math.inv(m), v) as number[]
         const y = math.dot(vector, coeffs)
-        if (clamp && (y < grid.min.y || y > grid.max.y)) continue
+        if (clamp && (y < grid.min.y || y > grid.max.y)) {
+          const clampedP = new BABYLON.Vector3(x, BABYLON.MathTools.Clamp(y, grid.min.y, grid.max.y), z)
+          this.points.push(clampedP)
+          continue
+        }
+
         this.points.push(new BABYLON.Vector3(x, y, z))
       }
     }
-    console.timeEnd("-- built Surface in:")
+  }
+
+  clearPointMeshes() {
+    this.pointMeshes.forEach(m => m.dispose())
+    this.pointMeshes = []
   }
 
   destroy() {
     if (this.mesh) this.mesh.dispose()
     if (this.cubePrefab) this.cubePrefab.dispose()
-    this.pointMeshes.forEach(m => m.dispose())
+    this.clearPointMeshes()
+  }
+
+  buildMesh(grid : Grid, scene : BABYLON.Scene) {
+    //this.clearPointMeshes()
+    const vd = PointCloudToVertexData(grid, this.points)
+    const mesh = new BABYLON.Mesh("reconstructed surface", scene)
+    vd.applyToMesh(mesh)
+    return mesh
   }
 
   visualize(scene : BABYLON.Scene, material : BABYLON.Material) {
     if (this.cubePrefab) this.cubePrefab.dispose()
-    this.pointMeshes.forEach(m => m.dispose())
+    this.clearPointMeshes()
 
     this.cubePrefab = BABYLON.MeshBuilder.CreateBox("", {
       size: .01
