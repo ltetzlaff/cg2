@@ -24,6 +24,7 @@ export class Engine {
   private gridOptions : GridOptions
   private grid : Grid
   private surface : Surface
+  private surfaceMesh : BABYLON.Mesh
 
   constructor(canvas : HTMLCanvasElement) {
     this.canvas = canvas
@@ -45,7 +46,7 @@ export class Engine {
     this.gridMat = new WireFrameMaterial(BABYLON.Color3.Blue(), this.scene)
     this.surfaceMat = new WireFrameMaterial(BABYLON.Color3.Green(), this.scene)
 
-    const s = .01
+    const s = .005
     this.pSize = new BABYLON.Vector3(s,s,s)
     this.octreeOptions = new OctreeOptions(60, 5, this.pSize)
     this.gridOptions = new GridOptions()
@@ -76,29 +77,28 @@ export class Engine {
     go.resolution = getFloat($(sel))
     bindOnChangeNumeric(sel, n => {
       go.resolution = n
-      this.buildSurface()
-    })
-    sel = "#pWendlandRadius"
-    go.radius = getFloat($(sel))
-    bindOnChangeNumeric(sel, n => {
-      go.wendlandRadius = n
-      this.buildSurface()
-    })
-    sel = "#pSubdivisions"
-    go.subdivisions = getFloat($(sel))
-    bindOnChangeNumeric(sel, n => go.subdivisions = n)
-
-    sel = "query"
-    go.findingPattern = TreesUtils.FindingPattern[getRadioValue(sel)]
-    bindOnChangeRadio(sel, s => {
-      go.findingPattern = TreesUtils.FindingPattern[s]
-      this.buildSurface()
+      this.buildGrid()
     })
 
     sel = "yLevel"
     go.yLevel = Level[getRadioValue(sel)]
     bindOnChangeRadio(sel, s => {
       go.yLevel = Level[s]
+      this.buildGrid()
+    })
+
+    /*
+    sel = "#pSubdivisions"
+    go.subdivisions = getFloat($(sel))
+    bindOnChangeNumeric(sel, n => {
+      go.subdivisions = n
+    })
+    */
+
+    sel = "query"
+    go.findingPattern = TreesUtils.FindingPattern[getRadioValue(sel)]
+    bindOnChangeRadio(sel, s => {
+      go.findingPattern = TreesUtils.FindingPattern[s]
       this.buildSurface()
     })
 
@@ -116,11 +116,36 @@ export class Engine {
       this.buildSurface()
     })
 
+    sel = "#pWendlandRadius"
+    go.wendlandRadius = getFloat($(sel))
+    bindOnChangeNumeric(sel, n => {
+      go.wendlandRadius = n
+      this.buildSurface()
+    })
+
     sel = "#pClamp"
     go.clamp = getCheckbox($(sel))
     bindOnChangeCheckbox(sel, b => {
       go.clamp = b
       this.buildSurface()
+    })
+
+    sel = "#pBuildSurface"
+    go.buildSurface = getCheckbox($(sel))
+    bindOnChangeCheckbox(sel, b => {
+      go.buildSurface = b
+
+      if (b) this.buildSurface()
+      else this.surface.destroy()
+    })
+
+    sel = "#pBuildSurfaceMesh"
+    go.buildMesh = getCheckbox($(sel))
+    bindOnChangeCheckbox(sel, b => {
+      go.buildMesh = b
+
+      if (b) this.buildSurfaceMesh()
+      else this.surfaceMesh.dispose()
     })
 
     bindOnChangeFile("#load", fl => {
@@ -141,7 +166,7 @@ export class Engine {
     this.tree = new Octree(this.vertices, this.vertMeshes, this.octreeOptions)
   }
 
-  buildSurface() {
+  buildGrid() {
     if (!this.vertices || this.vertices.length === 0) return
     const { min, max } = TreesUtils.getExtents(this.vertices)
 
@@ -149,9 +174,33 @@ export class Engine {
     this.grid = new Grid(min, max, this.gridOptions)
     this.grid.visualize(this.scene, this.gridMat)
 
+    if (this.gridOptions.buildSurface) this.buildSurface()
+  }
+
+  buildSurface() {
+    if (!this.grid) return
+
     if (this.surface) this.surface.destroy()
+
+    console.time("-- built Surface in:")
     this.surface = new Surface(this.tree, this.grid)
+    console.timeEnd("-- built Surface in:")
+
     this.surface.visualize(this.scene, this.surfaceMat)
+
+    if (this.gridOptions.buildMesh) this.buildSurfaceMesh()
+  }
+
+  buildSurfaceMesh() {
+    if (!this.surface) return
+
+    if (this.surfaceMesh) this.surfaceMesh.dispose()
+
+    console.time("-- built SurfaceMesh in:")
+    this.surfaceMesh = this.surface.buildMesh(this.grid, this.scene)
+    console.timeEnd("-- built SurfaceMesh in:")
+
+    this.surfaceMesh.material = this.surfaceMat
   }
 
   load(file : string, asPointCloud : boolean = false) : void {
@@ -194,7 +243,7 @@ export class Engine {
     //scene.meshes.push(...vertMeshes)
     this.vertices = vertices
     this.buildTree()
-    this.buildSurface()
+    this.buildGrid()
   }
 }
 
