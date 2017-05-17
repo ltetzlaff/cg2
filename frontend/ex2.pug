@@ -7,16 +7,18 @@ block content
     section
       h3 Grid
       +number("pResolution", "Min. Resolution", .05, .01)
-      +number("pWendlandRadius", "Wendland Radius", 1.25, .05)
+      +number("pWendlandRadius", "Wendland Radius", 1.1, .05)
       +number("pSubdivisions", "Subdivisions", 1, 1)
       +radio("yLevel", "Min")
       +radio("yLevel", "Average", true)
       +radio("yLevel", "Max")
       +checkbox("pClamp", "Clamp to Grid extents", true)
+      +checkbox("pBuildSurface", "Generate Surface", false)
+      +checkbox("pBuildSurfaceMesh", "Generate Surface Mesh", false)
     section
       h3 Query for WLS
       +radio("query", "Radius")
-        +number("pRadius", "", .3, .1)
+        +number("pRadius", "", .333, .1)
       +radio("query", "KNearest", true)
         +number("pKNearest", "", 10, 1)
     section
