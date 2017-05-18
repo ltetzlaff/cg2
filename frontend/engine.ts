@@ -205,12 +205,12 @@ export class Engine {
   }
 
   buildSurface() {
+    if (this.surface) this.surface.destroy()
+
     if (!this.gridOptions.buildSurface) {
       this.buildSurfaceMesh()
       return
     }
-
-    if (this.surface) this.surface.destroy()
 
     console.time("-- built Surface in:")
     this.surface = new Surface(this.tree, this.grid)
@@ -221,11 +221,11 @@ export class Engine {
   }
 
   buildSurfaceMesh() {
+    if (this.surfaceMesh) this.surfaceMesh.destroy()
+
     if (!this.gridOptions.buildSurfaceMesh) {
       return
     }
-
-    if (this.surfaceMesh) this.surfaceMesh.destroy()
 
     console.time("-- built SurfaceMesh in:")
     this.surfaceMesh = this.surface.buildMesh(this.grid, this.scene)
