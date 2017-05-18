@@ -10,11 +10,15 @@ block content
       +number("pWendlandRadius", "Wendland Radius", 1.1, .05)
       +number("pSubdivisions", "Subdivisions", 1, 1)
       +radio("yLevel", "Min")
-      +radio("yLevel", "Average", true)
+      +radio("yLevel", "Half", true)
       +radio("yLevel", "Max")
       +checkbox("pClamp", "Clamp to Grid extents", true)
+      +checkbox("pBuildGrid", "Generate Grid", true)
       +checkbox("pBuildSurface", "Generate Surface", false)
       +checkbox("pBuildSurfaceMesh", "Generate Surface Mesh", false)
+      +checkbox("pVisualizeGrid", "Draw Grid", true)
+      +checkbox("pVisualizeSurface", "Draw Surface", true)
+      +checkbox("pVisualizeSurfaceMesh", "Draw Surface Mesh", true)
     section
       h3 Query for WLS
       +radio("query", "Radius")
