@@ -18,7 +18,7 @@ export class OFFFileLoader implements BABYLON.ISceneLoaderPlugin {
 
   private parseOFF (meshName : string, scene : BABYLON.Scene, data : string) : BABYLON.AbstractMesh {
     const lines : string[] = data.split("\n")
-    
+
     lines.shift() // header line
     const whitespace = /\s+/
 
@@ -28,11 +28,12 @@ export class OFFFileLoader implements BABYLON.ISceneLoaderPlugin {
     const [numVertices, numFaces] : number[] = firstLine.trim().split(whitespace).map(Number)
     const positionsFlat : number[] = []
     const faces : number[] = []
-    
+
     lines.forEach((line, i) => {
       const splits : string[] = line.trim().split(whitespace)
       if (i < numVertices) {
-        positionsFlat.push(...splits.map(parseFloat))
+        const [x, z, y] = splits.map(parseFloat) // y and z exchanged
+        positionsFlat.push(...[x, y, z])
       } else if (i < numVertices + numFaces) {
         splits.shift()
         faces.push(...splits.map(Number))
