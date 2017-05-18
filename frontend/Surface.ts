@@ -4,7 +4,7 @@ import { Tree } from "./Trees/Tree"
 import * as math from "mathjs"
 
 export enum Level {
-  Min, Max, Average
+  Min, Max, Half
 }
 
 function PointCloudToVertexData(grid : Grid, points : BABYLON.Vector3[]) : BABYLON.VertexData {
@@ -43,21 +43,32 @@ function PointCloudToVertexData(grid : Grid, points : BABYLON.Vector3[]) : BABYL
 }
 
 export class GridOptions {
+  public buildGrid = true
   public resolution = 1
   public subdivisions = 1
 
+  public buildSurface = false
   public findingPattern : TreesUtils.FindingPattern
   public radius = .1
   public k = 1
-  public buildSurface = false
 
+  public buildSurfaceMesh = false
   public wendlandRadius = .2
   public yLevel = Level.Min
   public clamp = false
-  public buildMesh = false
 }
 
-export class Grid {
+export interface IVisualizable {
+  visualization : BABYLON.InstancedMesh[] | BABYLON.Mesh[] | BABYLON.Mesh
+
+  visualize(showOrHide : boolean, scene : BABYLON.Scene, material : BABYLON.Material) : void
+
+  destroy() : void
+}
+
+export class Grid implements IVisualizable {
+  public visualization : BABYLON.Mesh
+
   public gridOptions : GridOptions
   public min : BABYLON.Vector3
   public max : BABYLON.Vector3
@@ -65,8 +76,7 @@ export class Grid {
   public zCount : number
   public xResolution : number
   public zResolution : number
-  private yAverage : number
-  private plane : BABYLON.Mesh
+  private yHalf : number
   public yPosition : number
 
   constructor(min : BABYLON.Vector3, max : BABYLON.Vector3, gridOptions : GridOptions) {
@@ -81,7 +91,7 @@ export class Grid {
     this.zCount = Math.floor(diff.z/gridOptions.resolution)
     this.zResolution = diff.z/this.zCount
 
-    this.yAverage = min.y + diff.y/2
+    this.yHalf = min.y + diff.y/2
     this.yPosition = this.getYPosition()
   }
 
@@ -89,12 +99,17 @@ export class Grid {
     switch (this.gridOptions.yLevel) {
       case Level.Min: return this.min.y
       case Level.Max: return this.max.y
-      case Level.Average: return this.yAverage
+      case Level.Half: return this.yHalf
       default: throw new RangeError()
     }
   }
 
-  visualize(scene : BABYLON.Scene, material : BABYLON.Material) {
+  visualize(show : boolean, scene : BABYLON.Scene, material : BABYLON.Material) {
+    if (!show) {
+      if (this.visualization) this.visualization.dispose()
+      return
+    }
+
     const plane = BABYLON.MeshBuilder.CreateTiledGround("grid", {
       xmin: this.min.x, xmax: this.max.x,
       zmin: this.min.z, zmax: this.max.z,
@@ -102,23 +117,23 @@ export class Grid {
     }, scene)
     plane.position.y = this.yPosition
     plane.material = material
-    this.plane = plane
+    this.visualization = plane
   }
 
   destroy() {
-    if (this.plane) this.plane.dispose()
+    this.visualize(false, null, null)
   }
 }
 
-export class Surface {
-  private mesh : BABYLON.Mesh
+export class Surface implements IVisualizable {
+  public visualization : BABYLON.InstancedMesh[]
+
   private points : BABYLON.Vector3[]
-  private pointMeshes : BABYLON.InstancedMesh[]
   private cubePrefab : BABYLON.Mesh
 
   constructor(tree : Tree, grid : Grid) {
     this.points = []
-    this.pointMeshes = []
+    this.visualization = []
 
     const { findingPattern, k, radius, clamp, wendlandRadius } = grid.gridOptions
 
@@ -167,39 +182,36 @@ export class Surface {
     }
   }
 
-  clearPointMeshes() {
-    this.pointMeshes.forEach(m => m.dispose())
-    this.pointMeshes = []
-  }
-
   destroy() {
-    if (this.mesh) this.mesh.dispose()
     if (this.cubePrefab) this.cubePrefab.dispose()
-    this.clearPointMeshes()
+    this.visualize(false, null, null)
   }
 
   buildMesh(grid : Grid, scene : BABYLON.Scene) {
     //this.clearPointMeshes()
     const vd = PointCloudToVertexData(grid, this.points)
-    const mesh = new BABYLON.Mesh("reconstructed surface", scene)
+    const mesh = new SurfaceMesh("reconstructed surface", scene)
     vd.applyToMesh(mesh)
     return mesh
   }
 
-  visualize(scene : BABYLON.Scene, material : BABYLON.Material) {
-    if (this.cubePrefab) this.cubePrefab.dispose()
-    this.clearPointMeshes()
+  visualize(show : boolean, scene : BABYLON.Scene, material : BABYLON.Material) {
+    if (!show) {
+      this.visualization.forEach(m => m.dispose())
+      this.visualization = []
+      return
+    }
 
-    this.cubePrefab = BABYLON.MeshBuilder.CreateBox("", {
-      size: .01
-    }, scene)
-    this.cubePrefab.isVisible = false
-    this.cubePrefab.material = material
+    if (!this.cubePrefab) {
+      this.cubePrefab = BABYLON.MeshBuilder.CreateBox("", { size: .01 }, scene)
+      this.cubePrefab.isVisible = false
+      this.cubePrefab.material = material
+    }
 
     this.points.forEach(p => {
       const c = this.cubePrefab.createInstance("point")
       c.setAbsolutePosition(p)
-      this.pointMeshes.push(c)
+      this.visualization.push(c)
     })
   }
 
@@ -243,4 +255,19 @@ export class Surface {
   }
 }
 
+export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
+  public visualization : BABYLON.Mesh
 
+  public visualize(show : boolean, _scene : BABYLON.Scene, material : BABYLON.Material) {
+    if (!show) {
+      this.dispose()
+      return
+    }
+
+    this.material = material
+  }
+
+  public destroy() {
+    this.visualize(false, null, null)
+  }
+}
