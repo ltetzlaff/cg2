@@ -2,7 +2,7 @@ import * as BABYLON from "../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "./Trees/TreesUtils"
 import { Tree } from "./Trees/Tree"
 import { Octree, OctreeOptions } from "./Trees/Octree"
-import { Grid, GridOptions, Surface, Level } from "./Surface"
+import { Grid, GridOptions, Surface, SurfaceMesh, Level } from "./Surface"
 import "./OFFFileLoader"
 
 export class Engine {
@@ -24,7 +24,7 @@ export class Engine {
   private gridOptions : GridOptions
   private grid : Grid
   private surface : Surface
-  private surfaceMesh : BABYLON.Mesh
+  private surfaceMesh : SurfaceMesh
 
   constructor(canvas : HTMLCanvasElement) {
     this.canvas = canvas
@@ -130,22 +130,40 @@ export class Engine {
       this.buildSurface()
     })
 
+    sel = "#pBuildGrid"
+    go.buildSurface = getCheckbox($(sel))
+    bindOnChangeCheckbox(sel, b => {
+      go.buildGrid = b
+      this.buildGrid()
+    })
+
     sel = "#pBuildSurface"
     go.buildSurface = getCheckbox($(sel))
     bindOnChangeCheckbox(sel, b => {
       go.buildSurface = b
-
-      if (b) this.buildSurface()
-      else this.surface.destroy()
+      this.buildSurface()
     })
 
     sel = "#pBuildSurfaceMesh"
-    go.buildMesh = getCheckbox($(sel))
+    go.buildSurfaceMesh = getCheckbox($(sel))
     bindOnChangeCheckbox(sel, b => {
-      go.buildMesh = b
+      go.buildSurfaceMesh = b
+      this.buildSurfaceMesh()
+    })
 
-      if (b) this.buildSurfaceMesh()
-      else this.surfaceMesh.dispose()
+    sel = "#pVisualizeGrid"
+    bindOnChangeCheckbox(sel, b => {
+      if (this.grid) this.grid.visualize(b, this.scene, this.gridMat)
+    })
+
+    sel = "#pVisualizeSurface"
+    bindOnChangeCheckbox(sel, b => {
+      if (this.surface) this.surface.visualize(b, this.scene, this.surfaceMat)
+    })
+
+    sel = "#pVisualizeSurfaceMesh"
+    bindOnChangeCheckbox(sel, b => {
+      if (this.surfaceMesh) this.surfaceMesh.visualize(b, this.scene, this.surfaceMat)
     })
 
     bindOnChangeFile("#load", fl => {
@@ -167,18 +185,30 @@ export class Engine {
   }
 
   buildGrid() {
+    if (this.grid) this.grid.destroy()
+
+    if (!this.gridOptions.buildGrid) {
+      this.buildSurface()
+      return
+    }
+
     if (!this.vertices || this.vertices.length === 0) return
     const { min, max } = TreesUtils.getExtents(this.vertices)
 
-    if (this.grid) this.grid.destroy()
+    console.time("-- built Grid in:")
     this.grid = new Grid(min, max, this.gridOptions)
-    this.grid.visualize(this.scene, this.gridMat)
+    console.timeEnd("-- built Grid in:")
 
-    if (this.gridOptions.buildSurface) this.buildSurface()
+    this.grid.visualize(getCheckbox($("#pVisualizeGrid")), this.scene, this.gridMat)
+
+    this.buildSurface()
   }
 
   buildSurface() {
-    if (!this.grid) return
+    if (!this.gridOptions.buildSurface) {
+      this.buildSurfaceMesh()
+      return
+    }
 
     if (this.surface) this.surface.destroy()
 
@@ -186,21 +216,22 @@ export class Engine {
     this.surface = new Surface(this.tree, this.grid)
     console.timeEnd("-- built Surface in:")
 
-    this.surface.visualize(this.scene, this.surfaceMat)
-
-    if (this.gridOptions.buildMesh) this.buildSurfaceMesh()
+    this.surface.visualize(getCheckbox($("#pVisualizeSurface")), this.scene, this.surfaceMat)
+    this.buildSurfaceMesh()
   }
 
   buildSurfaceMesh() {
-    if (!this.surface) return
+    if (!this.gridOptions.buildSurfaceMesh) {
+      return
+    }
 
-    if (this.surfaceMesh) this.surfaceMesh.dispose()
+    if (this.surfaceMesh) this.surfaceMesh.destroy()
 
     console.time("-- built SurfaceMesh in:")
     this.surfaceMesh = this.surface.buildMesh(this.grid, this.scene)
     console.timeEnd("-- built SurfaceMesh in:")
 
-    this.surfaceMesh.material = this.surfaceMat
+    this.surfaceMesh.visualize(getCheckbox($("#pVisualizeSurfaceMesh")), null, this.surfaceMat)
   }
 
   load(file : string, asPointCloud : boolean = false) : void {
@@ -240,7 +271,6 @@ export class Engine {
     }
     this.vertMeshes = vertMeshes
 
-    //scene.meshes.push(...vertMeshes)
     this.vertices = vertices
     this.buildTree()
     this.buildGrid()
