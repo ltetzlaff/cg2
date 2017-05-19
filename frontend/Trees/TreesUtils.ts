@@ -6,12 +6,13 @@ export namespace TreesUtils {
   export interface IQueryable{
     findIntersecting(ray : BABYLON.Ray) : any
     findIntersecting(sphere : Sphere) : any
+    findIntersecting(tube : Tube) : any
   }
 
   /** Retrieve minimum and maximum values for x,y,z out of
    * @param {Array<Array<Number>[3]>} points
    */
-  export function getExtents(points : BABYLON.Vector3[]) {
+  export function getExtents(points : BABYLON.Vector3[], pad? : boolean) {
     const max = new BABYLON.Vector3(-Infinity, -Infinity, -Infinity)
     const min = new BABYLON.Vector3( Infinity,  Infinity,  Infinity)
 
@@ -22,7 +23,13 @@ export namespace TreesUtils {
         if (v[d] > max[d]) max[d] = v[d]
       })
     }
-    return { min, max }
+    if (pad) {
+      const e = .02
+      const padding = new BABYLON.Vector3(e, e, e)
+      return { min: min.subtract(padding), max: max.add(padding)}
+    } else {
+      return { min, max }
+    }
   }
 
   const EPSILON : number = 10e7
@@ -68,8 +75,63 @@ export namespace TreesUtils {
     }
   }
 
+  export interface IVolume {
+    contains(point : BABYLON.Vector3) : boolean
+    distanceToCenter(point : BABYLON.Vector3) : number
+  }
 
-  export class Sphere {
+  // adapted from https://www.gamedev.net/topic/649000-intersection-between-a-circle-and-an-aabb/?view=findpost&p=5102113
+  export function rectInCircle(min : BABYLON.Vector3, max : BABYLON.Vector3, x : number, z : number, r : number) : boolean {
+    const p = new BABYLON.Vector2(BABYLON.MathTools.Clamp(x, min.x, max.x), BABYLON.MathTools.Clamp(z, min.z, max.z))
+    const dist = new BABYLON.Vector2(x, z).subtract(p)
+    const d = dist.length()
+    return d <= r
+  }
+
+  export class Tube implements IVolume {
+    public center : BABYLON.Vector2
+    public radius : number
+
+    constructor(center : BABYLON.Vector2, radius : number) {
+      this.center = center
+      this.radius = radius
+    }
+
+    intersectsBoxMinMax(min : BABYLON.Vector3, max : BABYLON.Vector3) : boolean {
+      const x = this.center.x
+      const z = this.center.y
+      return rectInCircle(min, max, x, z, this.radius)
+    }
+
+    contains(p : BABYLON.Vector3) : boolean {
+      const r = this.radius
+      return (new BABYLON.Vector2(p.x, p.z)).subtract(this.center).lengthSquared() <= r*r
+    }
+
+    distanceToCenter(p : BABYLON.Vector3) : number {
+      return (new BABYLON.Vector2(p.x, p.z)).subtract(this.center).length()
+    }
+  }
+
+  export class Cylinder {
+    public pivot : BABYLON.Vector3
+    public radius : number
+    public height : number
+
+    constructor(pivot : BABYLON.Vector3, radius : number, height : number) {
+      this.pivot = pivot
+      this.radius = radius
+      this.height = height
+    }
+
+    intersectsBoxMinMax(min : BABYLON.Vector3, max : BABYLON.Vector3) : boolean {
+      const { x, y, z } = this.pivot
+      if (y < min.y || y + this.height > max.y) return false
+      return rectInCircle(min, max, x, z, this.radius)
+    }
+  }
+
+  export class Sphere implements IVolume {
     public center : BABYLON.Vector3
     public radius : number
 
@@ -83,8 +145,8 @@ export namespace TreesUtils {
       return p.subtract(this.center).lengthSquared() <= r*r
     }
 
-    distanceToCenter(point : BABYLON.Vector3) : number {
-      return point.subtract(this.center).length()
+    distanceToCenter(p : BABYLON.Vector3) : number {
+      return p.subtract(this.center).length()
     }
   }
 }
