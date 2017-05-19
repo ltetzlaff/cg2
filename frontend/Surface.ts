@@ -4,10 +4,6 @@ import { Tree } from "./Trees/Tree"
 import * as math from "mathjs"
 import { IVisualizable } from "./Utils"
 
-export enum Level {
-  Min, Max, Half
-}
-
 function PointCloudToVertexData(grid : Grid, points : BABYLON.Vector3[]) : BABYLON.VertexData {
   // Indices
   const faces : BABYLON.IndicesArray = []
@@ -55,7 +51,6 @@ export class GridOptions {
 
   public buildSurfaceMesh = false
   public wendlandRadius = .2
-  public yLevel = Level.Min
   public clamp = false
 }
 
@@ -83,18 +78,6 @@ export class Grid implements IVisualizable {
 
     this.zCount = Math.floor(diff.z/gridOptions.resolution)
     this.zResolution = diff.z/this.zCount
-
-    this.yHalf = min.y + diff.y/2
-    this.yPosition = this.getYPosition()
-  }
-
-  getYPosition() : number {
-    switch (this.gridOptions.yLevel) {
-      case Level.Min: return this.min.y
-      case Level.Max: return this.max.y
-      case Level.Half: return this.yHalf
-      default: throw new RangeError()
-    }
   }
 
   visualize(show : boolean, scene : BABYLON.Scene, material : BABYLON.Material) {

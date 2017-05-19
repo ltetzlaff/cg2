@@ -2,7 +2,7 @@ import * as BABYLON from "../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "./Trees/TreesUtils"
 import { Tree } from "./Trees/Tree"
 import { Octree, OctreeOptions } from "./Trees/Octree"
-import { Grid, GridOptions, Surface, SurfaceMesh, Level } from "./Surface"
+import { Grid, GridOptions, Surface, SurfaceMesh } from "./Surface"
 import "./OFFFileLoader"
 
 export class Engine {
@@ -79,13 +79,6 @@ export class Engine {
     go.resolution = getFloat($(sel))
     bindOnChangeNumeric(sel, n => {
       go.resolution = n
-      this.buildGrid()
-    })
-
-    sel = "yLevel"
-    go.yLevel = Level[getRadioValue(sel)]
-    bindOnChangeRadio(sel, s => {
-      go.yLevel = Level[s]
       this.buildGrid()
     })
 
