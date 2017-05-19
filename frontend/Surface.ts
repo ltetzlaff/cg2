@@ -2,6 +2,7 @@ import * as BABYLON from "../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "./Trees/TreesUtils"
 import { Tree } from "./Trees/Tree"
 import * as math from "mathjs"
+import { IVisualizable } from "./Utils"
 
 export enum Level {
   Min, Max, Half
@@ -56,14 +57,6 @@ export class GridOptions {
   public wendlandRadius = .2
   public yLevel = Level.Min
   public clamp = false
-}
-
-export interface IVisualizable {
-  visualization : BABYLON.InstancedMesh[] | BABYLON.Mesh[] | BABYLON.Mesh
-
-  visualize(showOrHide : boolean, scene : BABYLON.Scene, material : BABYLON.Material) : void
-
-  destroy() : void
 }
 
 export class Grid implements IVisualizable {
@@ -145,8 +138,8 @@ export class Surface implements IVisualizable {
           grid.min.z + gz * grid.zResolution)
 
         const {x, z} = gridPoint
-        const nearbyPoints = tree.query(gridPoint, findingPattern,
-          { k, radius })
+        const nearbyPoints = tree.query(new BABYLON.Vector2(x, z),
+          findingPattern, { k, radius })
 
         const dims = 6
         let m = math.zeros(dims, dims)
@@ -203,7 +196,7 @@ export class Surface implements IVisualizable {
     }
 
     if (!this.cubePrefab) {
-      this.cubePrefab = BABYLON.MeshBuilder.CreateBox("", { size: .01 }, scene)
+      this.cubePrefab = BABYLON.MeshBuilder.CreateBox("", { size: .005 }, scene)
       this.cubePrefab.isVisible = false
       this.cubePrefab.material = material
     }
