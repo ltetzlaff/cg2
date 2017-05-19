@@ -2,7 +2,8 @@ import * as BABYLON from "../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "./Trees/TreesUtils"
 import { Tree } from "./Trees/Tree"
 import { Octree, OctreeOptions } from "./Trees/Octree"
-import { Grid, GridOptions, Surface, SurfaceMesh } from "./Surface"
+import { Surface, SurfaceMesh } from "./Surface"
+import { Grid, GridOptions } from "./Grid"
 import "./OFFFileLoader"
 
 export class Engine {
@@ -149,7 +150,6 @@ export class Engine {
     sel = "#pVisualizeTree"
     bindOnChangeCheckbox(sel, b => {
       if (this.tree) this.tree.visualize(b, this.scene, this.treeMat)
-      console.log(this.tree)
     })
 
     sel = "#pVisualizeGrid"
