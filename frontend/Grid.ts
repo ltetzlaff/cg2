@@ -63,8 +63,7 @@ export class Grid implements IVisualizable {
   public xResolution : number
   public zResolution : number
   private yHalf : number
-  public yPosition : number
-
+ 
   constructor(min : BABYLON.Vector3, max : BABYLON.Vector3, gridOptions : GridOptions) {
     this.gridOptions = gridOptions
     this.min = min
@@ -89,7 +88,7 @@ export class Grid implements IVisualizable {
       zmin: this.min.z, zmax: this.max.z,
       subdivisions: { w: this.xCount, h: this.zCount }
     }, scene)
-    plane.position.y = this.yPosition
+    plane.position.y = this.min.y
     plane.material = material
     this.visualization = plane
   }

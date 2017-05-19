@@ -23,6 +23,7 @@ export class Engine {
   private pointMat : BABYLON.Material
   private gridMat : BABYLON.Material
   private surfaceMat : BABYLON.Material
+  private surfaceMeshMat : BABYLON.StandardMaterial
   private gridOptions : GridOptions
   private grid : Grid
   private surface : Surface
@@ -48,6 +49,8 @@ export class Engine {
     this.pointMat = new WireFrameMaterial(BABYLON.Color3.Red(), this.scene)
     this.gridMat = new WireFrameMaterial(BABYLON.Color3.Blue(), this.scene)
     this.surfaceMat = new WireFrameMaterial(BABYLON.Color3.Green(), this.scene)
+    this.surfaceMeshMat = new BABYLON.StandardMaterial("surfaceMesh", this.scene)
+    this.surfaceMeshMat.diffuseColor = BABYLON.Color3.Purple()
 
     const s = .005
     this.pSize = new BABYLON.Vector3(s,s,s)
@@ -164,7 +167,7 @@ export class Engine {
 
     sel = "#pVisualizeSurfaceMesh"
     bindOnChangeCheckbox(sel, b => {
-      if (this.surfaceMesh) this.surfaceMesh.visualize(b, this.scene, this.surfaceMat)
+      if (this.surfaceMesh) this.surfaceMesh.visualize(b, this.scene, this.surfaceMeshMat)
     })
 
     bindOnChangeFile("#load", fl => {

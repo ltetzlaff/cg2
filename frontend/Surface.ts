@@ -20,7 +20,7 @@ export class Surface implements IVisualizable {
       for (let gz = 0; gz < grid.zCount; gz++) {
         const gridPoint = new BABYLON.Vector3(
           grid.min.x + gx * grid.xResolution,
-          grid.yPosition,
+          grid.min.y,
           grid.min.z + gz * grid.zResolution)
 
         const {x, z} = gridPoint
