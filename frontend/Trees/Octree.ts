@@ -1,6 +1,7 @@
 import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "./TreesUtils"
 import { Tree } from "./Tree"
+import { IVisualizable } from "../Utils"
 
 export class OctreeOptions {
   public bucketSize : number
@@ -38,6 +39,13 @@ export class Octant extends TreesUtils.Box implements TreesUtils.IQueryable {
     } else if (x instanceof TreesUtils.Sphere) {
       const s = x as TreesUtils.Sphere
       b = BABYLON.BoundingBox.IntersectsSphere(this.min, this.max, s.center, s.radius)
+    } else if (x instanceof TreesUtils.Cylinder) {
+      const c = x as TreesUtils.Cylinder
+      b = c.intersectsBoxMinMax(this.min, this.max)
+    } else if (x instanceof TreesUtils.Tube) {
+      const t = x as TreesUtils.Tube
+      b = TreesUtils.rectInCircle(this.min, this.max, t.center.x, t.center.y, t.radius)
+      //b = t.intersectsBoxMinMax(this.min, this.max)
     } else {
       throw new TypeError("Cannot find Intersection with type: " + x.constructor.name + JSON.stringify(x))
     }
@@ -84,11 +92,14 @@ export class Octant extends TreesUtils.Box implements TreesUtils.IQueryable {
   }
 }
 
-export class Octree extends Octant implements Tree {
+export class Octree extends Octant implements Tree, IVisualizable {
+  public visualization : BABYLON.Mesh[]
+
   constructor(vertices : BABYLON.Vector3[], vertMeshes : BABYLON.InstancedMesh[], options : OctreeOptions = DEFAULT) {
-    const { min, max } = TreesUtils.getExtents(vertices)
+    let { min, max } = TreesUtils.getExtents(vertices, true)
     super(min, max.subtract(min), 0, options)
 
+    this.visualization = []
 
     const pSize = options.pointSize
     this.points = vertices.map((p, i) => {
@@ -98,19 +109,29 @@ export class Octree extends Octant implements Tree {
     this.trySubdivide()
   }
 
-  visualize(scene : BABYLON.Scene, container : BABYLON.Mesh[], mat : BABYLON.Material) : void {
+  visualize(show : boolean, scene : BABYLON.Scene, mat : BABYLON.Material) : void {
+    if (!show) {
+      this.visualization.forEach(m => m.dispose())
+      this.visualization = []
+      return
+    }
+
     const viz = (octant : Octant) => {
       const s = octant.size
       const b = BABYLON.MeshBuilder.CreateBox("octant lv" + octant.level,
         { width: s.x, height: s.y, depth: s.z }, scene)
       b.setAbsolutePosition(octant.center)
       b.material = mat
-      container.push(b)
+      this.visualization.push(b)
 
       // recurse
       octant.children.forEach(child => viz(child))
     }
     viz(this)
+  }
+
+  destroy() {
+    this.visualize(false, null, null)
   }
 
   pick(ray : BABYLON.Ray, pattern : TreesUtils.FindingPattern, options : any) : TreesUtils.Point[] {
@@ -135,30 +156,37 @@ export class Octree extends Octant implements Tree {
     return this.query(startingPoint, pattern, options)
   }
 
-  query(startingPoint : BABYLON.Vector3, pattern : TreesUtils.FindingPattern, options : any) : TreesUtils.Point[] {
+  query(startingPoint : BABYLON.Vector3 | BABYLON.Vector2, pattern : TreesUtils.FindingPattern, options : any) : TreesUtils.Point[] {
     if (!(options.radius === 0 || options.radius > 0)) {
       options.radius = Number.MAX_VALUE // knearest just needs a point
     }
 
-    const sphere = new TreesUtils.Sphere(startingPoint, options.radius)
+    let intersectedOctants : Octant[] = []
+    let volume : TreesUtils.IVolume
+    if (startingPoint instanceof BABYLON.Vector3) {
+      // classic point query
+      volume = new TreesUtils.Sphere(startingPoint, options.radius)
+    } else if (startingPoint instanceof BABYLON.Vector2) {
+      // cylindrical query
+      volume = new TreesUtils.Tube(startingPoint, options.radius)
+    }
+    intersectedOctants = this.findIntersecting(volume)
 
     //console.time("  - finding Query")
     let candidates : TreesUtils.Point[] = []
     switch (pattern) {
       case TreesUtils.FindingPattern.KNearest:
-        this.findIntersecting(sphere)
-          .forEach(octant => {
-            candidates.push(...octant.points)
-            candidates = candidates
-              .sort((a, b) => sphere.distanceToCenter(a.box.center) - sphere.distanceToCenter(b.box.center))
-              .slice(0, options.k)
-          })
+        intersectedOctants.forEach(octant => {
+          candidates.push(...octant.points)
+          candidates = candidates
+            .sort((a, b) => volume.distanceToCenter(a.box.center) - volume.distanceToCenter(b.box.center))
+            .slice(0, options.k)
+        })
         break
       case TreesUtils.FindingPattern.Radius:
-        this.findIntersecting(sphere)
-          .forEach(octant => {
-            candidates.push(...octant.points.filter(p => sphere.contains(p.box.center)))
-          })
+        intersectedOctants.forEach(octant => {
+          candidates.push(...octant.points.filter(p => volume.contains(p.box.center)))
+        })
         break
     }
     //console.timeEnd("  - finding Query")

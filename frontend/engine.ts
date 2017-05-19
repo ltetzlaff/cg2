@@ -14,10 +14,11 @@ export class Engine {
   private cam : BABYLON.ArcRotateCamera
 
   private pSize : BABYLON.Vector3
-  private tree : Tree
+  private tree : Octree
   private octreeOptions : OctreeOptions
   private vertices : BABYLON.Vector3[]
   private vertMeshes : BABYLON.InstancedMesh[]
+  private treeMat : BABYLON.Material
   private pointMat : BABYLON.Material
   private gridMat : BABYLON.Material
   private surfaceMat : BABYLON.Material
@@ -42,6 +43,7 @@ export class Engine {
     this.sun = new BABYLON.HemisphericLight("Sun", new BABYLON.Vector3(0, 1, 0), this.scene)
 
     this.vertices = []
+    this.treeMat = new WireFrameMaterial(BABYLON.Color3.Yellow(), this.scene)
     this.pointMat = new WireFrameMaterial(BABYLON.Color3.Red(), this.scene)
     this.gridMat = new WireFrameMaterial(BABYLON.Color3.Blue(), this.scene)
     this.surfaceMat = new WireFrameMaterial(BABYLON.Color3.Green(), this.scene)
@@ -151,6 +153,12 @@ export class Engine {
       this.buildSurfaceMesh()
     })
 
+    sel = "#pVisualizeTree"
+    bindOnChangeCheckbox(sel, b => {
+      if (this.tree) this.tree.visualize(b, this.scene, this.treeMat)
+      console.log(this.tree)
+    })
+
     sel = "#pVisualizeGrid"
     bindOnChangeCheckbox(sel, b => {
       if (this.grid) this.grid.visualize(b, this.scene, this.gridMat)
@@ -212,6 +220,7 @@ export class Engine {
       return
     }
 
+    if (!this.grid) return
     console.time("-- built Surface in:")
     this.surface = new Surface(this.tree, this.grid)
     console.timeEnd("-- built Surface in:")
@@ -227,6 +236,7 @@ export class Engine {
       return
     }
 
+    if (!this.surface || !this.grid) return
     console.time("-- built SurfaceMesh in:")
     this.surfaceMesh = this.surface.buildMesh(this.grid, this.scene)
     console.timeEnd("-- built SurfaceMesh in:")
