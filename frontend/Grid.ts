@@ -6,13 +6,14 @@ export function PointCloudToVertexData(grid : Grid, points : BABYLON.Vector3[]) 
   // Indices
   const faces : BABYLON.IndicesArray = []
   const { xCount, zCount } = grid
-  for (let x = 0; x < xCount - 1; x++) {
-    const row = x * zCount
-    for (let z = 0; z < zCount - 1; z++) {
+  const pointsPerColumn = zCount + 1
+  for (let x = 0; x <= xCount - 1; x++) {
+    const row = x * pointsPerColumn
+    for (let z = 0; z <= zCount - 1; z++) {
       // current gridCell goes +1 in x and z
       const pointX0 = row + z
       const pointZ0 = pointX0 + 1
-      const pointX1 = pointX0 + zCount
+      const pointX1 = pointX0 + pointsPerColumn
       const pointZ1 = pointX1 + 1
       faces.push(...[pointX0, pointZ0, pointX1])
       faces.push(...[pointZ0, pointX1, pointZ1])

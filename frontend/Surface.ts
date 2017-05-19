@@ -16,8 +16,8 @@ export class Surface implements IVisualizable {
 
     const { findingPattern, k, radius, clamp, wendlandRadius } = grid.gridOptions
 
-    for (let gx = 0; gx < grid.xCount; gx++) {
-      for (let gz = 0; gz < grid.zCount; gz++) {
+    for (let gx = 0; gx <= grid.xCount; gx++) {
+      for (let gz = 0; gz <= grid.zCount; gz++) {
         const gridPoint = new BABYLON.Vector3(
           grid.min.x + gx * grid.xResolution,
           grid.min.y,
