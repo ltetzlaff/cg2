@@ -5,7 +5,11 @@ import { IVisualizable } from "./Utils"
 export function PointCloudToVertexData(grid : Grid, points : BABYLON.Vector3[]) : BABYLON.VertexData {
   // Indices
   const faces : BABYLON.IndicesArray = []
-  const { xCount, zCount } = grid
+  
+  const { subdivisions } = grid.gridOptions
+  const xCount = grid.xCount * subdivisions
+  const zCount = grid.zCount * subdivisions
+ 
   const pointsPerColumn = zCount + 1
   for (let x = 0; x <= xCount - 1; x++) {
     const row = x * pointsPerColumn

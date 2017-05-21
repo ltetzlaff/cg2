@@ -88,13 +88,12 @@ export class Engine {
       this.buildGrid()
     })
 
-    /*
     sel = "#pSubdivisions"
     go.subdivisions = getFloat($(sel))
     bindOnChangeNumeric(sel, n => {
       go.subdivisions = n
+      this.buildSurface()
     })
-    */
 
     sel = "query"
     go.findingPattern = TreesUtils.FindingPattern[getRadioValue(sel)]

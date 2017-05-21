@@ -14,14 +14,19 @@ export class Surface implements IVisualizable {
     this.points = []
     this.visualization = []
 
-    const { findingPattern, k, radius, clamp, wendlandRadius } = grid.gridOptions
+    const { findingPattern, k, radius, clamp, wendlandRadius, subdivisions } = grid.gridOptions
+    
+    const xCount = grid.xCount * subdivisions
+    const xResolution = grid.xResolution / subdivisions
+    const zCount = grid.zCount * subdivisions
+    const zResolution = grid.zResolution / subdivisions
 
-    for (let gx = 0; gx <= grid.xCount; gx++) {
-      for (let gz = 0; gz <= grid.zCount; gz++) {
+    for (let gx = 0; gx <= xCount; gx++) {
+      for (let gz = 0; gz <= zCount; gz++) {
         const gridPoint = new BABYLON.Vector3(
-          grid.min.x + gx * grid.xResolution,
+          grid.min.x + gx * xResolution,
           grid.min.y,
-          grid.min.z + gz * grid.zResolution)
+          grid.min.z + gz * zResolution)
 
         const {x, z} = gridPoint
         const nearbyPoints = tree.query(new BABYLON.Vector2(x, z),
