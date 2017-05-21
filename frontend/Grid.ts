@@ -15,8 +15,8 @@ export function PointCloudToVertexData(grid : Grid, points : BABYLON.Vector3[]) 
       const pointZ0 = pointX0 + 1
       const pointX1 = pointX0 + pointsPerColumn
       const pointZ1 = pointX1 + 1
-      faces.push(...[pointX0, pointZ0, pointX1])
-      faces.push(...[pointZ0, pointX1, pointZ1])
+      faces.push(...[pointX1, pointZ0, pointX0])
+      faces.push(...[pointX1, pointZ1, pointZ0])
     }
   }
 
