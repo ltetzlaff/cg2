@@ -50,7 +50,9 @@ export class Engine {
     this.gridMat = new WireFrameMaterial(BABYLON.Color3.Blue(), this.scene)
     this.surfaceMat = new WireFrameMaterial(BABYLON.Color3.Green(), this.scene)
     this.surfaceMeshMat = new BABYLON.StandardMaterial("surfaceMesh", this.scene)
+    this.surfaceMeshMat.roughness = .6
     this.surfaceMeshMat.diffuseColor = BABYLON.Color3.Purple()
+    this.surfaceMeshMat.wireframe = false
 
     const s = .005
     this.pSize = new BABYLON.Vector3(s,s,s)
@@ -237,7 +239,7 @@ export class Engine {
     this.surfaceMesh = this.surface.buildMesh(this.grid, this.scene)
     console.timeEnd("-- built SurfaceMesh in:")
 
-    this.surfaceMesh.visualize(getCheckbox($("#pVisualizeSurfaceMesh")), null, this.surfaceMat)
+    this.surfaceMesh.visualize(getCheckbox($("#pVisualizeSurfaceMesh")), null, this.surfaceMeshMat)
   }
 
   load(file : string, asPointCloud : boolean = false) : void {

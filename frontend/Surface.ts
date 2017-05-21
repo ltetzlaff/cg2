@@ -138,15 +138,17 @@ export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
   public visualization : BABYLON.Mesh
 
   public visualize(show : boolean, _scene : BABYLON.Scene, material : BABYLON.Material) {
+    this.isVisible = show
+    
     if (!show) {
-      this.dispose()
       return
     }
 
+    this.convertToFlatShadedMesh()    
     this.material = material
   }
 
   public destroy() {
-    this.visualize(false, null, null)
+    this.dispose()
   }
 }
