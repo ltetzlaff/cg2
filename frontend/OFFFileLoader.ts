@@ -40,10 +40,16 @@ export class OFFFileLoader implements BABYLON.ISceneLoaderPlugin {
       }
     })
 
+    const normalsFlat : number[] = []
+    for (let i = 0; i < positionsFlat.length; i++) {
+      normalsFlat[i] = 1
+    }
+
     const vertexData = new BABYLON.VertexData()
     vertexData.positions = positionsFlat
     vertexData.indices = faces
-
+    vertexData.uvs = []
+    vertexData.normals = normalsFlat
     const parsedMesh = new BABYLON.Mesh(meshName, scene)
     vertexData.applyToMesh(parsedMesh)
     console.log("loading complete")
@@ -52,4 +58,3 @@ export class OFFFileLoader implements BABYLON.ISceneLoaderPlugin {
 }
 
 BABYLON.SceneLoader.RegisterPlugin(new OFFFileLoader())
-//}

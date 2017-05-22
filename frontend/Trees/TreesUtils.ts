@@ -67,11 +67,9 @@ export namespace TreesUtils {
 
   export class Point {
     public box : Box
-    public mesh : BABYLON.InstancedMesh
 
-    constructor(box : Box, mesh : BABYLON.InstancedMesh) {
+    constructor(box : Box) {
       this.box = box
-      this.mesh = mesh
     }
   }
 

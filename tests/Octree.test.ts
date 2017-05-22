@@ -11,7 +11,7 @@ const p4 = new BABYLON.Vector3(2, 3, 4.1)
 const p5 = new BABYLON.Vector3(2, 3, 4.9)
 const p6 = new BABYLON.Vector3(2, 3, 4.5)
 const pOut = new BABYLON.Vector3(-2, 0, -3)
-const octree = new Octree([p1, p2, p3, p4, p5, p6], [], new OctreeOptions(2, 2, new BABYLON.Vector3(.05, .05, .05)))
+const octree = new Octree([p1, p2, p3, p4, p5, p6], new OctreeOptions(2, 2, new BABYLON.Vector3(.05, .05, .05)))
 
 
 const name = "Trees/Octree/"
@@ -63,7 +63,7 @@ test(name + "picking", t => {
   cases.forEach(testCase => {
     const i = testCase.in
     const result = octree.pick(i.ray, i.pattern, i.options)
-    t.deepEqual(result.map(p => p.box.center), testCase.expect)
+    t.deepEqual(result.map((p : TreesUtils.Point) => p.box.center), testCase.expect)
   })
   t.end()
 })
