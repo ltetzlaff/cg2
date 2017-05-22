@@ -102,6 +102,13 @@ export class Engine {
       this.buildSurface()
     })
 
+    sel = "subdivideWith"
+    go.subdivideWithPolynomials = getRadioValue(sel) === "Polynomials"
+    bindOnChangeRadio(sel, s => {
+      go.subdivideWithPolynomials = s === "Polynomials"
+      this.buildSurface()
+    })
+
     sel = "#pKNearest"
     go.k = getFloat($(sel)) | 0
     bindOnChangeNumeric(sel, n => {
