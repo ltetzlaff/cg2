@@ -6,6 +6,7 @@ export class GridOptions {
   public buildGrid = true
   public resolution = 1
   public subdivisions = 1
+  public subdivideWithPolynomials = false
 
   public buildSurface = false
   public findingPattern : TreesUtils.FindingPattern

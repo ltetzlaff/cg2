@@ -4,6 +4,8 @@ import { Tree } from "./Trees/Tree"
 import { IVisualizable } from "./Utils"
 import { Grid } from "./Grid"
 import { PointCloud } from "./PointCloud"
+import { TreesUtils } from "./Trees/TreesUtils"
+
 
 export class Surface implements IVisualizable {
   public visualization : BABYLON.Mesh
@@ -14,12 +16,16 @@ export class Surface implements IVisualizable {
   constructor(tree : Tree, grid : Grid) {
     const points : BABYLON.Vector3[] = []
 
-    const { findingPattern, k, radius, clamp, wendlandRadius, subdivisions } = grid.gridOptions
+    const { findingPattern, k, radius, clamp, wendlandRadius, subdivisions, subdivideWithPolynomials } = grid.gridOptions
     
     const xCount = grid.xCount * subdivisions
-    const xResolution = grid.xResolution / subdivisions
     const zCount = grid.zCount * subdivisions
+    const xResolution = grid.xResolution / subdivisions
     const zResolution = grid.zResolution / subdivisions
+
+    const queryDelegate = (v2: BABYLON.Vector2) => {
+      return tree.query(v2, findingPattern, { k, radius })
+    }
 
     for (let gx = 0; gx <= xCount; gx++) {
       for (let gz = 0; gz <= zCount; gz++) {
@@ -27,44 +33,46 @@ export class Surface implements IVisualizable {
           grid.min.x + gx * xResolution,
           grid.min.y,
           grid.min.z + gz * zResolution)
+        
+        if (subdivideWithPolynomials || (gx % subdivisions === 0 && gz % subdivisions === 0)) {
+          // calculate WLS Point
+          const p = this.calculateWLSPoint(gridPoint, wendlandRadius, queryDelegate)
+          if (p) {
+            if (clamp) p.y = BABYLON.MathTools.Clamp(p.y, grid.min.y, grid.max.y)
+            points.push(p)
+          } else {
+            points.push(gridPoint)
+          } 
+        } else {
+          // interpolate using bezier surface (deCasteljau)
 
-        const {x, z} = gridPoint
-        const nearbyPoints = tree.query(new BABYLON.Vector2(x, z),
-          findingPattern, { k, radius })
-
-        const dims = 6
-        let m = math.zeros(dims, dims)
-        let v = math.zeros(dims)
-
-        if (nearbyPoints.length <= 1) {
-          // this would result in det(m) === 0 and therefore inv(m) breaks
-          const defaultP = new BABYLON.Vector3(x, grid.min.y, z)
-          points.push(defaultP)
-          continue
         }
-
-        nearbyPoints.forEach(nearbyBox => {
-          const p = nearbyBox.box.center
-          const weight = Surface.wendland(gridPoint, p, wendlandRadius)
-
-          // add weighted systemMatrix
-          m = math.add(m, math.multiply(Surface.Matrix(p.x, p.z), weight)) as number[][]
-          v = math.add(v, math.multiply(Surface.Vector(p.x, p.z), p.y * weight)) as number[]
-        })
-
-        const vector = Surface.Vector(x, z)
-        const coeffs = math.multiply(math.inv(m), v) as number[]
-        const y = math.dot(vector, coeffs)
-        if (clamp && (y < grid.min.y || y > grid.max.y)) {
-          const clampedP = new BABYLON.Vector3(x, BABYLON.MathTools.Clamp(y, grid.min.y, grid.max.y), z)
-          points.push(clampedP)
-          continue
-        }
-
-        points.push(new BABYLON.Vector3(x, y, z))
       }
     }
     this.pointCloud = new PointCloud(points, "Surface")
+  }
+
+  calculateWLSPoint(gridPoint : BABYLON.Vector3, wendlandRadius : number, queryDelegate : (v2: BABYLON.Vector2) => TreesUtils.Point[]) {
+    const {x, z} = gridPoint
+    const nearbyPoints = queryDelegate(new BABYLON.Vector2(x, z))
+    if (nearbyPoints.length <= 1) return null
+    
+    const dims = 6
+    let m = math.zeros(dims, dims)
+    let v = math.zeros(dims)
+    nearbyPoints.forEach(nearbyBox => {
+      const p = nearbyBox.box.center
+      const weight = Surface.wendland(gridPoint, p, wendlandRadius)
+
+      // add weighted systemMatrix
+      m = math.add(m, math.multiply(Surface.Matrix(p.x, p.z), weight)) as number[][]
+      v = math.add(v, math.multiply(Surface.Vector(p.x, p.z), p.y * weight)) as number[]
+    })
+
+    const vector = Surface.Vector(x, z)
+    const coeffs = math.multiply(math.inv(m), v) as number[]
+    const y = math.dot(vector, coeffs)
+    return new BABYLON.Vector3(x, y, z)
   }
 
   destroy() {
