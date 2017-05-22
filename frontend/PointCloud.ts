@@ -7,29 +7,53 @@ export class PointCloud implements IVisualizable {
   public vertices : BABYLON.Vector3[]
   public name : string
 
-  constructor(mesh : BABYLON.AbstractMesh | BABYLON.Mesh, name? : string) {
+  constructor(data : BABYLON.Mesh | BABYLON.Vector3[], name? : string) {
     this.name = name || "PointCloud"
-    this.visualization = mesh as BABYLON.Mesh
-    const vertexCoordinates = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind)
 
-    if (vertexCoordinates.length % 3 !== 0) {
-      throw new RangeError("Vertices array doesn't seem to consist of Vector3s")
-    }
+    if (data instanceof BABYLON.Mesh) {
+      this.visualization = data
+      const posFlat = data.getVerticesData(BABYLON.VertexBuffer.PositionKind)
+      
+      const vertices : BABYLON.Vector3[] = []
+      for (let i = 0, j = 0, len = posFlat.length / 3; j < len; j++, i+=3) {
+        vertices[j] = new BABYLON.Vector3(posFlat[i], posFlat[i+1], posFlat[i+2])
+      }
+      this.vertices = vertices    
+    } else {
+      // Assert Vector3[]
+      this.vertices = data
 
-    const vertCount = vertexCoordinates.length / 3
-    const vertices : BABYLON.Vector3[] = []
-    for (let i = 0; i < vertCount; i++) {
-      let j = i * 3
-      vertices[i] = new BABYLON.Vector3(vertexCoordinates[j], vertexCoordinates[j+1], vertexCoordinates[j+2])
+      // make visualization later because it requires reference to scene
     }
-    this.vertices = vertices
   }
 
-  public visualize(show : boolean, material : BABYLON.Material, _scene? : BABYLON.Scene) {
-    this.visualization.isVisible = show
+  public visualize(show : boolean, material : BABYLON.Material, scene? : BABYLON.Scene) {
+    if (this.visualization) this.visualization.isVisible = show
 
     if (!show) {
       return
+    }
+
+    if (!this.visualization) {
+      this.visualization = new BABYLON.Mesh("surfaceVisualization", scene)
+      const positionsFlat : number[] = []
+      const normalsFlat : number[] = []
+      const vertices = this.vertices
+      for (let i = 0, j = 0, len = vertices.length; j < len; j++, i+=3) {
+        const p = vertices[j]
+        positionsFlat[i]   = p.x
+        positionsFlat[i+1] = p.y
+        positionsFlat[i+2] = p.z
+        normalsFlat[i]   = 1
+        normalsFlat[i+1] = 1
+        normalsFlat[i+2] = 1
+      }
+      const vd = new BABYLON.VertexData()
+      vd.positions = positionsFlat
+      vd.normals = normalsFlat
+      vd.uvs = []
+      vd.indices = []
+      vd.applyToMesh(this.visualization)
     }
 
     this.visualization.material = material
@@ -65,18 +89,23 @@ export class PointCloud implements IVisualizable {
     const vertices = this.vertices
     const len = vertices.length
     const positions = new Float32Array(len * 3)
-    for (let i = 0, j = 0; i < len; i++, j += 3) {
+    const normals : number[] = []
+    for (let i = 0, j = 0; j < len; j++, i += 3) {
       //points[i].toArray(vertices, j)
-      const p = vertices[i]
-      positions[j] = p.x
-      positions[j+1] = p.y
-      positions[j+2] = p.z
+      const p = vertices[j]
+      positions[i]   = p.x
+      positions[i+1] = p.y
+      positions[i+2] = p.z
+      normals[i]   = 1
+      normals[i+1] = 1
+      normals[i+2] = 1
     }
 
     // Merge
     const vertexData = new BABYLON.VertexData()
     vertexData.positions = positions
     vertexData.indices = indices
+    vertexData.normals = normals
     vertexData.applyToMesh(mesh)
     return
   }

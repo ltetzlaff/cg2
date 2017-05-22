@@ -46,11 +46,9 @@ export class Engine {
     this.sun = new BABYLON.HemisphericLight("Sun", new BABYLON.Vector3(0, 1, 0), this.scene)
 
     this.treeMat = new WireFrameMaterial(BABYLON.Color3.Yellow(), this.scene)
-    this.pointMat = new BABYLON.StandardMaterial("points", this.scene)
-    this.pointMat.pointsCloud = true
-    this.pointMat.pointSize = 2
+    this.pointMat = new PointCloudMaterial(BABYLON.Color3.Red(), this.scene)
     this.gridMat = new WireFrameMaterial(BABYLON.Color3.Blue(), this.scene)
-    this.surfaceMat = new WireFrameMaterial(BABYLON.Color3.Green(), this.scene)
+    this.surfaceMat = new PointCloudMaterial(BABYLON.Color3.Green() ,this.scene)
     this.surfaceMeshMat = new BABYLON.StandardMaterial("surfaceMesh", this.scene)
     this.surfaceMeshMat.roughness = .6
     this.surfaceMeshMat.diffuseColor = BABYLON.Color3.Purple()
@@ -243,7 +241,7 @@ export class Engine {
     if (!this.surface || !this.grid) return
     console.time("-- built SurfaceMesh in:")
     this.surfaceMesh = new SurfaceMesh("reconstructed surface", this.scene)
-    this.pointCloud.toTriangleMesh(this.grid, this.surfaceMesh)
+    this.surface.pointCloud.toTriangleMesh(this.grid, this.surfaceMesh)
     console.timeEnd("-- built SurfaceMesh in:")
 
     this.surfaceMesh.visualize(getCheckbox($("#pVisualizeSurfaceMesh")), this.surfaceMeshMat)
@@ -268,11 +266,19 @@ export class Engine {
   }
 }
 
+class PointCloudMaterial extends BABYLON.StandardMaterial {
+  constructor(color : BABYLON.Color3, scene : BABYLON.Scene) {
+    super("points", scene)
+    this.diffuseColor = color
+    this.pointsCloud = true
+    this.pointSize = 4
+  }
+}
+
 class WireFrameMaterial extends BABYLON.StandardMaterial {
   constructor(color : BABYLON.Color3, scene : BABYLON.Scene) {
     super("wireframe", scene)
     this.diffuseColor = color
-    //this.disableLighting = true
 	  this.wireframe = true
   }
 }

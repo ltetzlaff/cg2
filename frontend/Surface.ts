@@ -6,14 +6,13 @@ import { Grid } from "./Grid"
 import { PointCloud } from "./PointCloud"
 
 export class Surface implements IVisualizable {
-  public visualization : BABYLON.InstancedMesh[]
+  public visualization : BABYLON.Mesh
+  public pointCloud : PointCloud
 
-  private points : BABYLON.Vector3[]
   private cubePrefab : BABYLON.Mesh
 
   constructor(tree : Tree, grid : Grid) {
-    this.points = []
-    this.visualization = []
+    const points : BABYLON.Vector3[] = []
 
     const { findingPattern, k, radius, clamp, wendlandRadius, subdivisions } = grid.gridOptions
     
@@ -40,7 +39,7 @@ export class Surface implements IVisualizable {
         if (nearbyPoints.length <= 1) {
           // this would result in det(m) === 0 and therefore inv(m) breaks
           const defaultP = new BABYLON.Vector3(x, grid.min.y, z)
-          this.points.push(defaultP)
+          points.push(defaultP)
           continue
         }
 
@@ -58,38 +57,22 @@ export class Surface implements IVisualizable {
         const y = math.dot(vector, coeffs)
         if (clamp && (y < grid.min.y || y > grid.max.y)) {
           const clampedP = new BABYLON.Vector3(x, BABYLON.MathTools.Clamp(y, grid.min.y, grid.max.y), z)
-          this.points.push(clampedP)
+          points.push(clampedP)
           continue
         }
 
-        this.points.push(new BABYLON.Vector3(x, y, z))
+        points.push(new BABYLON.Vector3(x, y, z))
       }
     }
+    this.pointCloud = new PointCloud(points, "Surface")
   }
 
   destroy() {
-    if (this.cubePrefab) this.cubePrefab.dispose()
     this.visualize(false, null, null)
   }
 
-  visualize(show : boolean, material : BABYLON.Material, scene : BABYLON.Scene) {
-    if (!show) {
-      this.visualization.forEach(m => m.dispose())
-      this.visualization = []
-      return
-    }
-
-    if (!this.cubePrefab) {
-      this.cubePrefab = BABYLON.MeshBuilder.CreateBox("", { size: .005 }, scene)
-      this.cubePrefab.isVisible = false
-      this.cubePrefab.material = material
-    }
-
-    this.points.forEach(p => {
-      const c = this.cubePrefab.createInstance("point")
-      c.setAbsolutePosition(p)
-      this.visualization.push(c)
-    })
+  visualize(show : boolean, material : BABYLON.Material, scene? : BABYLON.Scene) {
+    this.pointCloud.visualize(show, material, scene)
   }
 
   static wendland(a : BABYLON.Vector3, b : BABYLON.Vector3, radius : number) {
