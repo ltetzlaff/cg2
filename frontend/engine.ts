@@ -2,8 +2,10 @@ import * as BABYLON from "../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "./Trees/TreesUtils"
 import { Tree } from "./Trees/Tree"
 import { Octree, OctreeOptions } from "./Trees/Octree"
-import { Surface, SurfaceMesh } from "./Surface"
+import { PointCloud } from "./PointCloud"
 import { Grid, GridOptions } from "./Grid"
+import { Surface } from "./Surface"
+import { SurfaceMesh } from "./SurfaceMesh"
 import "./OFFFileLoader"
 
 export class Engine {
@@ -17,8 +19,7 @@ export class Engine {
   private pSize : BABYLON.Vector3
   private tree : Octree
   private octreeOptions : OctreeOptions
-  private vertices : BABYLON.Vector3[]
-  private vertMeshes : BABYLON.InstancedMesh[]
+  private pointCloud : PointCloud
   private treeMat : BABYLON.Material
   private pointMat : BABYLON.Material
   private gridMat : BABYLON.Material
@@ -44,9 +45,10 @@ export class Engine {
     this.cam.attachControl(this.canvas, false)
     this.sun = new BABYLON.HemisphericLight("Sun", new BABYLON.Vector3(0, 1, 0), this.scene)
 
-    this.vertices = []
     this.treeMat = new WireFrameMaterial(BABYLON.Color3.Yellow(), this.scene)
-    this.pointMat = new WireFrameMaterial(BABYLON.Color3.Red(), this.scene)
+    this.pointMat = new BABYLON.StandardMaterial("points", this.scene)
+    this.pointMat.pointsCloud = true
+    this.pointMat.pointSize = 2
     this.gridMat = new WireFrameMaterial(BABYLON.Color3.Blue(), this.scene)
     this.surfaceMat = new WireFrameMaterial(BABYLON.Color3.Green(), this.scene)
     this.surfaceMeshMat = new BABYLON.StandardMaterial("surfaceMesh", this.scene)
@@ -151,24 +153,29 @@ export class Engine {
       this.buildSurfaceMesh()
     })
 
+    sel = "#pVisualizePointCloud"
+    bindOnChangeCheckbox(sel, b => {
+      if (this.pointCloud) this.pointCloud.visualize(b, this.pointMat)
+    })
+
     sel = "#pVisualizeTree"
     bindOnChangeCheckbox(sel, b => {
-      if (this.tree) this.tree.visualize(b, this.scene, this.treeMat)
+      if (this.tree) this.tree.visualize(b, this.treeMat, this.scene)
     })
 
     sel = "#pVisualizeGrid"
     bindOnChangeCheckbox(sel, b => {
-      if (this.grid) this.grid.visualize(b, this.scene, this.gridMat)
+      if (this.grid) this.grid.visualize(b, this.gridMat, this.scene)
     })
 
     sel = "#pVisualizeSurface"
     bindOnChangeCheckbox(sel, b => {
-      if (this.surface) this.surface.visualize(b, this.scene, this.surfaceMat)
+      if (this.surface) this.surface.visualize(b, this.surfaceMat, this.scene)
     })
 
     sel = "#pVisualizeSurfaceMesh"
     bindOnChangeCheckbox(sel, b => {
-      if (this.surfaceMesh) this.surfaceMesh.visualize(b, this.scene, this.surfaceMeshMat)
+      if (this.surfaceMesh) this.surfaceMesh.visualize(b, this.surfaceMeshMat, this.scene)
     })
 
     bindOnChangeFile("#load", fl => {
@@ -186,7 +193,7 @@ export class Engine {
   }
 
   buildTree() {
-    this.tree = new Octree(this.vertices, this.vertMeshes, this.octreeOptions)
+    this.tree = new Octree(this.pointCloud.vertices, this.octreeOptions)
   }
 
   buildGrid() {
@@ -197,14 +204,14 @@ export class Engine {
       return
     }
 
-    if (!this.vertices || this.vertices.length === 0) return
-    const { min, max } = TreesUtils.getExtents(this.vertices)
+    if (!this.pointCloud || this.pointCloud.vertices.length === 0) return
+    const { min, max } = TreesUtils.getExtents(this.pointCloud.vertices)
 
     console.time("-- built Grid in:")
     this.grid = new Grid(min, max, this.gridOptions)
     console.timeEnd("-- built Grid in:")
 
-    this.grid.visualize(getCheckbox($("#pVisualizeGrid")), this.scene, this.gridMat)
+    this.grid.visualize(getCheckbox($("#pVisualizeGrid")), this.gridMat, this.scene)
 
     this.buildSurface()
   }
@@ -222,7 +229,7 @@ export class Engine {
     this.surface = new Surface(this.tree, this.grid)
     console.timeEnd("-- built Surface in:")
 
-    this.surface.visualize(getCheckbox($("#pVisualizeSurface")), this.scene, this.surfaceMat)
+    this.surface.visualize(getCheckbox($("#pVisualizeSurface")), this.surfaceMat,this.scene)
     this.buildSurfaceMesh()
   }
 
@@ -235,52 +242,29 @@ export class Engine {
 
     if (!this.surface || !this.grid) return
     console.time("-- built SurfaceMesh in:")
-    this.surfaceMesh = this.surface.buildMesh(this.grid, this.scene)
+    this.surfaceMesh = new SurfaceMesh("reconstructed surface", this.scene)
+    this.pointCloud.toTriangleMesh(this.grid, this.surfaceMesh)
     console.timeEnd("-- built SurfaceMesh in:")
 
-    this.surfaceMesh.visualize(getCheckbox($("#pVisualizeSurfaceMesh")), null, this.surfaceMeshMat)
+    this.surfaceMesh.visualize(getCheckbox($("#pVisualizeSurfaceMesh")), this.surfaceMeshMat)
   }
 
   load(file : string, asPointCloud : boolean = false) : void {
     BABYLON.SceneLoader.ImportMesh(file, "/models/", file, this.scene, (meshes : BABYLON.AbstractMesh[]) => {
       // Remove old meshes
       this.scene.meshes.forEach(m => m.dispose())
-      if (this.scene.meshes.length) this.scene.meshes = []
+      //if (this.scene.meshes.length) this.scene.meshes = []
 
       if (asPointCloud) {
-        this.convertToPointCloud(meshes[0], this.scene, this.pointMat)
+        this.pointCloud = new PointCloud(meshes[0] as BABYLON.Mesh, file)
+        this.pointCloud.visualize(getCheckbox($("#pVisualizePointCloud")), this.pointMat)
+        this.buildTree()
+        this.buildGrid()
       } else {
         meshes[0].material = this.pointMat
         this.scene.meshes.push(meshes[0])
       }
     })
-  }
-
-  convertToPointCloud(mesh : BABYLON.AbstractMesh, scene : BABYLON.Scene, mat : BABYLON.Material) {
-    const vertexCoordinates = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind)
-
-    if (vertexCoordinates.length % 3 !== 0) {
-      throw new RangeError("Vertices array doesn't seem to consist of Vector3s")
-    }
-
-    const vertCount = vertexCoordinates.length / 3
-    const vertices = new Array<BABYLON.Vector3>(vertCount)
-    const vertMeshes = new Array<BABYLON.InstancedMesh>(vertCount)
-    const vertMesh = BABYLON.MeshBuilder.CreateBox("vertMesh", { size: 1 }, scene)
-    vertMesh.material = mat
-    vertMesh.isVisible = false
-    for (let i = 0; i < vertCount; i++) {
-      let j = i * 3
-      vertices[i] = new BABYLON.Vector3(vertexCoordinates[j], vertexCoordinates[j+1], vertexCoordinates[j+2])
-      vertMeshes[i] = vertMesh.createInstance("v" + i)
-      vertMeshes[i].setAbsolutePosition(vertices[i])
-      vertMeshes[i].scaling = this.pSize
-    }
-    this.vertMeshes = vertMeshes
-
-    this.vertices = vertices
-    this.buildTree()
-    this.buildGrid()
   }
 }
 
