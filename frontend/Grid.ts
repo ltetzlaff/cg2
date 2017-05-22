@@ -2,46 +2,6 @@ import * as BABYLON from "../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "./Trees/TreesUtils"
 import { IVisualizable } from "./Utils"
 
-export function PointCloudToVertexData(grid : Grid, points : BABYLON.Vector3[]) : BABYLON.VertexData {
-  // Indices
-  const faces : BABYLON.IndicesArray = []
-  
-  const { subdivisions } = grid.gridOptions
-  const xCount = grid.xCount * subdivisions
-  const zCount = grid.zCount * subdivisions
- 
-  const pointsPerColumn = zCount + 1
-  for (let x = 0; x <= xCount - 1; x++) {
-    const row = x * pointsPerColumn
-    for (let z = 0; z <= zCount - 1; z++) {
-      // current gridCell goes +1 in x and z
-      const pointX0 = row + z
-      const pointZ0 = pointX0 + 1
-      const pointX1 = pointX0 + pointsPerColumn
-      const pointZ1 = pointX1 + 1
-      faces.push(...[pointX1, pointZ0, pointX0])
-      faces.push(...[pointX1, pointZ1, pointZ0])
-    }
-  }
-
-  // Vertices
-  const len = points.length
-  const vertices = new Float32Array(len * 3)
-  for (let i = 0, j = 0; i < len; i++, j += 3) {
-    //points[i].toArray(vertices, j)
-    const p = points[i]
-    vertices[j] = p.x
-    vertices[j+1] = p.y
-    vertices[j+2] = p.z
-  }
-
-  // Merge
-  const vertexData = new BABYLON.VertexData()
-  vertexData.positions = vertices
-  vertexData.indices = faces
-  return vertexData
-}
-
 export class GridOptions {
   public buildGrid = true
   public resolution = 1
@@ -82,7 +42,7 @@ export class Grid implements IVisualizable {
     this.zResolution = diff.z/this.zCount
   }
 
-  visualize(show : boolean, scene : BABYLON.Scene, material : BABYLON.Material) {
+  visualize(show : boolean, material : BABYLON.Material, scene?: BABYLON.Scene) {
     if (!show) {
       if (this.visualization) this.visualization.dispose()
       return
