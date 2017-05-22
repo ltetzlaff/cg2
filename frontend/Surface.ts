@@ -2,7 +2,8 @@ import * as BABYLON from "../node_modules/babylonjs/babylon.module"
 import * as math from "mathjs"
 import { Tree } from "./Trees/Tree"
 import { IVisualizable } from "./Utils"
-import { Grid, PointCloudToVertexData } from "./Grid"
+import { Grid } from "./Grid"
+import { PointCloud } from "./PointCloud"
 
 export class Surface implements IVisualizable {
   public visualization : BABYLON.InstancedMesh[]
@@ -71,15 +72,7 @@ export class Surface implements IVisualizable {
     this.visualize(false, null, null)
   }
 
-  buildMesh(grid : Grid, scene : BABYLON.Scene) {
-    //this.clearPointMeshes()
-    const vd = PointCloudToVertexData(grid, this.points)
-    const mesh = new SurfaceMesh("reconstructed surface", scene)
-    vd.applyToMesh(mesh)
-    return mesh
-  }
-
-  visualize(show : boolean, scene : BABYLON.Scene, material : BABYLON.Material) {
+  visualize(show : boolean, material : BABYLON.Material, scene : BABYLON.Scene) {
     if (!show) {
       this.visualization.forEach(m => m.dispose())
       this.visualization = []
@@ -136,24 +129,5 @@ export class Surface implements IVisualizable {
       [uv   , u2v   , v2u   , u3v   , u2v2  , v3u   ],
       [v2   , v2u   , v3    , u2v2  , v3u   , v3v   ]
     ]
-  }
-}
-
-export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
-  public visualization : BABYLON.Mesh
-
-  public visualize(show : boolean, _scene : BABYLON.Scene, material : BABYLON.Material) {
-    this.isVisible = show
-    
-    if (!show) {
-      return
-    }
-
-    this.convertToFlatShadedMesh()    
-    this.material = material
-  }
-
-  public destroy() {
-    this.dispose()
   }
 }
