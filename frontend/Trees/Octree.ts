@@ -95,7 +95,7 @@ export class Octant extends TreesUtils.Box implements TreesUtils.IQueryable {
 export class Octree extends Octant implements Tree, IVisualizable {
   public visualization : BABYLON.Mesh[]
 
-  constructor(vertices : BABYLON.Vector3[], vertMeshes : BABYLON.InstancedMesh[], options : OctreeOptions = DEFAULT) {
+  constructor(vertices : BABYLON.Vector3[], options : OctreeOptions = DEFAULT) {
     let { min, max } = TreesUtils.getExtents(vertices, true)
     super(min, max.subtract(min), 0, options)
 
@@ -103,13 +103,12 @@ export class Octree extends Octant implements Tree, IVisualizable {
 
     const pSize = options.pointSize
     this.points = vertices.map((p, i) => {
-      if (vertMeshes[i]) vertMeshes[i].scaling = pSize
-      return new TreesUtils.Point(new TreesUtils.Box(p.subtract(pSize.scale(.5)), pSize), vertMeshes[i] || null)
+      return new TreesUtils.Point(new TreesUtils.Box(p.subtract(pSize.scale(.5)), pSize))
     })
     this.trySubdivide()
   }
 
-  visualize(show : boolean, scene : BABYLON.Scene, mat : BABYLON.Material) : void {
+  visualize(show : boolean, mat : BABYLON.Material, scene?: BABYLON.Scene) : void {
     if (!show) {
       this.visualization.forEach(m => m.dispose())
       this.visualization = []
