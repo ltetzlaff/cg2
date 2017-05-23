@@ -5,10 +5,12 @@ import { Grid } from "./Grid"
 export class PointCloud implements IVisualizable {
   public visualization : BABYLON.Mesh
   public vertices : BABYLON.Vector3[]
+  public normals : BABYLON.Vector3[]
   public name : string
 
   constructor(data : BABYLON.Mesh | BABYLON.Vector3[], name? : string) {
     this.name = name || "PointCloud"
+    this.normals = []
 
     if (data instanceof BABYLON.Mesh) {
       this.visualization = data
@@ -36,17 +38,23 @@ export class PointCloud implements IVisualizable {
 
     if (!this.visualization) {
       this.visualization = new BABYLON.Mesh("surfaceVisualization", scene)
+      
+      const vertices = this.vertices
+      const normals = this.normals
+      const unitVector = new BABYLON.Vector3(1, 1, 1)
+
       const positionsFlat : number[] = []
       const normalsFlat : number[] = []
-      const vertices = this.vertices
+      
       for (let i = 0, j = 0, len = vertices.length; j < len; j++, i+=3) {
         const p = vertices[j]
         positionsFlat[i]   = p.x
         positionsFlat[i+1] = p.y
         positionsFlat[i+2] = p.z
-        normalsFlat[i]   = 1
-        normalsFlat[i+1] = 1
-        normalsFlat[i+2] = 1
+        const n = normals[j] || unitVector
+        normalsFlat[i]   = n.x
+        normalsFlat[i+1] = n.y
+        normalsFlat[i+2] = n.z
       }
       const vd = new BABYLON.VertexData()
       vd.positions = positionsFlat

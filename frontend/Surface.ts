@@ -15,6 +15,7 @@ export class Surface implements IVisualizable {
 
   constructor(tree : Tree, grid : Grid) {
     const points : BABYLON.Vector3[] = []
+    const normals : BABYLON.Vector3[] = []
 
     const { findingPattern, k, radius, clamp, wendlandRadius, subdivisions, subdivideWithPolynomials } = grid.gridOptions
     
@@ -45,11 +46,23 @@ export class Surface implements IVisualizable {
           } 
         } else {
           // interpolate using bezier surface (deCasteljau)
-
+          const { p, n } = this.calculateDeCasteljau(gridPoint)
+          points.push(p)
+          normals.push(n)
         }
       }
     }
     this.pointCloud = new PointCloud(points, "Surface")
+    this.pointCloud.normals = normals
+  }
+
+  calculateDeCasteljau(gridPoint : BABYLON.Vector3) {
+    const p = new BABYLON.Vector3(1, 1, 1)
+    const n = new BABYLON.Vector3(1, 1, 1)
+
+    // #TODO
+
+    return { p, n }
   }
 
   calculateWLSPoint(gridPoint : BABYLON.Vector3, wendlandRadius : number, queryDelegate : (v2: BABYLON.Vector2) => TreesUtils.Point[]) {
