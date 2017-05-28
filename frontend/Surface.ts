@@ -28,6 +28,8 @@ export class Surface implements IVisualizable {
       return tree.query(v2, findingPattern, { k, radius })
     }
 
+    const defaultNormal = new BABYLON.Vector3(1, 1, 1)
+
     for (let gx = 0; gx <= xCount; gx++) {
       for (let gz = 0; gz <= zCount; gz++) {
         const gridPoint = new BABYLON.Vector3(
@@ -37,18 +39,20 @@ export class Surface implements IVisualizable {
         
         if (subdivideWithPolynomials || (gx % subdivisions === 0 && gz % subdivisions === 0)) {
           // calculate WLS Point
-          const p = this.calculateWLSPoint(gridPoint, wendlandRadius, queryDelegate)
-          if (p) {
-            if (clamp) p.y = BABYLON.MathTools.Clamp(p.y, grid.min.y, grid.max.y)
-            points.push(p)
+          const { point, normal } = this.calculateWLSPoint(gridPoint, wendlandRadius, queryDelegate)
+          if (point) {
+            if (clamp) point.y = BABYLON.MathTools.Clamp(point.y, grid.min.y, grid.max.y)
+            points.push(point)
+            normals.push(normal)
           } else {
             points.push(gridPoint)
+            normals.push(defaultNormal)
           } 
         } else {
           // interpolate using bezier surface (deCasteljau)
-          const { p, n } = this.calculateDeCasteljau(gridPoint)
-          points.push(p)
-          normals.push(n)
+          const { point, normal } = this.calculateDeCasteljau(gridPoint, points)
+          points.push(point)
+          normals.push(normal)
         }
       }
     }
@@ -56,13 +60,13 @@ export class Surface implements IVisualizable {
     this.pointCloud.normals = normals
   }
 
-  calculateDeCasteljau(gridPoint : BABYLON.Vector3) {
-    const p = new BABYLON.Vector3(1, 1, 1)
-    const n = new BABYLON.Vector3(1, 1, 1)
-
+  calculateDeCasteljau(gridPoint : BABYLON.Vector3, points : BABYLON.Vector3[]) {
+    const point = new BABYLON.Vector3(1, 1, 1)
+    const normal = new BABYLON.Vector3(1, 1, 1)
+   
     // #TODO
 
-    return { p, n }
+    return { point, normal }
   }
 
   calculateWLSPoint(gridPoint : BABYLON.Vector3, wendlandRadius : number, queryDelegate : (v2: BABYLON.Vector2) => TreesUtils.Point[]) {
@@ -83,9 +87,16 @@ export class Surface implements IVisualizable {
     })
 
     const vector = Surface.Vector(x, z)
-    const coeffs = math.multiply(math.inv(m), v) as number[]
-    const y = math.dot(vector, coeffs)
-    return new BABYLON.Vector3(x, y, z)
+    const coeffs = math.multiply(math.inv(m), v)
+    const y = math.dot(vector, coeffs as number[])
+    
+    // Calculate Normal based on perpendicular tangents
+    const c = (i : number) => (coeffs as mathjs.Matrix).get([i])
+    const t1 = new BABYLON.Vector3(1, c(1) + 2 * c(3) * x + c(4) * x * z, 0)
+    const t2 = new BABYLON.Vector3(0, c(2) + 2 * c(5) * z + c(4) * x * z, 1)
+    const normal = BABYLON.Vector3.Cross(t1, t2).normalize()
+
+    return { point : new BABYLON.Vector3(x, y, z) , normal }
   }
 
   destroy() {

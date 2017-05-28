@@ -93,27 +93,31 @@ export class PointCloud implements IVisualizable {
       }
     }
 
-    // Vertices
+    // Vertices + normals
     const vertices = this.vertices
+    const normals = this.normals
     const len = vertices.length
-    const positions = new Float32Array(len * 3)
-    const normals : number[] = []
+
+    const positionsFlat = new Float32Array(len * 3)
+    const normalsFlat = new Float32Array(len * 3)
+
     for (let i = 0, j = 0; j < len; j++, i += 3) {
       //points[i].toArray(vertices, j)
       const p = vertices[j]
-      positions[i]   = p.x
-      positions[i+1] = p.y
-      positions[i+2] = p.z
-      normals[i]   = 1
-      normals[i+1] = 1
-      normals[i+2] = 1
+      const n = normals[j]
+      positionsFlat[i]   = p.x
+      positionsFlat[i+1] = p.y
+      positionsFlat[i+2] = p.z
+      normalsFlat[i]   = n.x
+      normalsFlat[i+1] = n.y
+      normalsFlat[i+2] = n.z
     }
 
     // Merge
     const vertexData = new BABYLON.VertexData()
-    vertexData.positions = positions
+    vertexData.positions = positionsFlat
     vertexData.indices = indices
-    vertexData.normals = normals
+    vertexData.normals = normalsFlat
     vertexData.applyToMesh(mesh)
     return
   }

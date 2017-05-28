@@ -11,7 +11,7 @@ export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
       return
     }
 
-    this.convertToFlatShadedMesh()    
+    //this.convertToFlatShadedMesh()    
     this.material = material
   }
 
