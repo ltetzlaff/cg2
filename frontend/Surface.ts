@@ -91,10 +91,13 @@ export class Surface implements IVisualizable {
     const y = math.dot(vector, coeffs as number[])
     
     // Calculate Normal based on perpendicular tangents
+    // tangent'y is coeffs derived by u or v
     const c = (i : number) => (coeffs as mathjs.Matrix).get([i])
-    const t1 = new BABYLON.Vector3(1, c(1) + 2 * c(3) * x + c(4) * x * z, 0)
-    const t2 = new BABYLON.Vector3(0, c(2) + 2 * c(5) * z + c(4) * x * z, 1)
-    const normal = BABYLON.Vector3.Cross(t1, t2).normalize()
+    const t1 = new BABYLON.Vector3(1, c(1) + 2 * c(3) * x + c(4) * z, 0)
+    const t2 = new BABYLON.Vector3(0, c(2) + 2 * c(5) * z + c(4) * x , 1)
+    const normal = BABYLON.Vector3.Cross(t1, t2)
+      .normalize()
+      .scaleInPlace(-1)
 
     return { point : new BABYLON.Vector3(x, y, z) , normal }
   }
