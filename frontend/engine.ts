@@ -178,6 +178,11 @@ export class Engine {
       if (this.surface) this.surface.visualize(b, this.surfaceMat, this.scene)
     })
 
+    sel = "#pVisualizeSurfaceVertexNormals"
+    bindOnChangeCheckbox(sel, b => {
+      if (this.surfaceMesh) this.surfaceMesh.debugNormals(b)
+    })
+
     sel = "#pVisualizeSurfaceMesh"
     bindOnChangeCheckbox(sel, b => {
       if (this.surfaceMesh) this.surfaceMesh.visualize(b, this.surfaceMeshMat, this.scene)
@@ -252,6 +257,7 @@ export class Engine {
     console.timeEnd("-- built SurfaceMesh in:")
 
     this.surfaceMesh.visualize(getCheckbox($("#pVisualizeSurfaceMesh")), this.surfaceMeshMat)
+    this.surfaceMesh.debugNormals(getCheckbox($("#pVisualizeSurfaceVertexNormals")))
   }
 
   load(file : string, asPointCloud : boolean = false) : void {

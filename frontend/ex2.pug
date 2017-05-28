@@ -10,8 +10,8 @@ block content
       +number("pWendlandRadius", "Wendland Radius", 1.1, .05)
       +checkbox("pClamp", "Clamp to Grid extents", true)
       +checkbox("pBuildGrid", "Generate Grid", true)
-      +checkbox("pBuildSurface", "Generate Surface", false)
-      +checkbox("pBuildSurfaceMesh", "Generate Surface Mesh", false)
+      +checkbox("pBuildSurface", "Generate Surface", true)
+      +checkbox("pBuildSurfaceMesh", "Generate Surface Mesh", true)
       h3 Subdivisions
       +number("pSubdivisions", "Subdivisions", 1, 1)
       +radio("subdivideWith", "Polynomials", true)
@@ -21,6 +21,7 @@ block content
       +checkbox("pVisualizeTree", "Draw Tree", false)
       +checkbox("pVisualizeGrid", "Draw Grid", true)
       +checkbox("pVisualizeSurface", "Draw Surface", true)
+      +checkbox("pVisualizeSurfaceVertexNormals", "Draw Vertex Normals", true)
       +checkbox("pVisualizeSurfaceMesh", "Draw Surface Mesh", true)
     section
       h3 Query for WLS
