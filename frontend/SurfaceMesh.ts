@@ -3,7 +3,7 @@ import { IVisualizable } from "./Utils"
 
 export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
   public visualization : BABYLON.Mesh
-  private normalLines : BABYLON.Mesh
+  private normalViz : BABYLON.Mesh
 
   public visualize(show : boolean, material : BABYLON.Material, _scene?: BABYLON.Scene) {
     this.isVisible = show
@@ -55,18 +55,17 @@ export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
     const normals : number[] = []
     const oldNormals = newData[BABYLON.VertexBuffer.NormalKind]
     
-    for (let i = 0; i < totalIndices; i += 3) {
+    for (let i = 0; i < totalIndices; i++) {
       indices[i]      = i
-      indices[i + 1]  = i + 1
-      indices[i + 2]  = i + 2
     }
 
     for (let i = 0; i < totalIndices; i += 6) {
-      let sn = new BABYLON.Vector3(0, 0, 0)
+      const sn = new BABYLON.Vector3(0, 0, 0)
       for (let j = 0; j < 6; j++) {
-        sn.x += oldNormals[(i + j) * 3]
-        sn.y += oldNormals[(i + j) * 3 + 1]
-        sn.z += oldNormals[(i + j) * 3 + 2]
+        const face = (i + j) * 3
+        sn.x += oldNormals[face]
+        sn.y += oldNormals[face + 1]
+        sn.z += oldNormals[face + 2]
       }
       sn.scaleInPlace(1/6)
       
@@ -78,7 +77,6 @@ export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
     }
 
     this.setVerticesData(BABYLON.VertexBuffer.NormalKind, normals, false)
-    
 
     this.setIndices(indices)
 
@@ -96,22 +94,29 @@ export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
   }
 
   debugNormals(show : boolean) {
-    if (this.normalLines) this.normalLines.dispose()
-    
+    if (this.normalViz) this.normalViz.dispose()
     if (!show) return
 
     const normals = this.getVerticesData(BABYLON.VertexBuffer.NormalKind)
+    const normal = (i : number) => BABYLON.Vector3.FromArray(normals, i)
+
     const positions = this.getVerticesData(BABYLON.VertexBuffer.PositionKind)
-    
+    const position = (i : number) => BABYLON.Vector3.FromArray(positions, i)
+
     const length = .05
     const lines = []
-    for (var i = 0; i < normals.length; i += 3) {
-        const v1 = BABYLON.Vector3.FromArray(positions, i)
-        const v2 = v1.add(BABYLON.Vector3.FromArray(normals, i).scaleInPlace(length))
-        lines.push([v1.add(this.position), v2.add(this.position)])
+
+    for (let i = 0; i < normals.length; i += 3) {
+        const v1 = position(i)
+        const n = normal(i)
+        const v2 = v1.add(n.scaleInPlace(length))
+        lines.push([
+          v1.add(this.position),
+          v2.add(this.position)
+        ])
     }
     const normalLines = BABYLON.MeshBuilder.CreateLineSystem("normalLines", { lines, updatable: false }, this.getScene())
     normalLines.color = BABYLON.Color3.White()
-    this.normalLines = normalLines
+    this.normalViz = normalLines
   }
 }
