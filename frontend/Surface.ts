@@ -29,6 +29,7 @@ export class Surface implements IVisualizable {
     }
 
     const defaultNormal = new BABYLON.Vector3(1, 1, 1)
+    const interpolatePoints : BABYLON.Vector3[] = []
 
     for (let gx = 0; gx <= xCount; gx++) {
       for (let gz = 0; gz <= zCount; gz++) {
@@ -37,36 +38,68 @@ export class Surface implements IVisualizable {
           grid.min.y,
           grid.min.z + gz * zResolution)
         
-        if (subdivideWithPolynomials || (gx % subdivisions === 0 && gz % subdivisions === 0)) {
+        const isOnGrid = gx % subdivisions === 0 && gz % subdivisions === 0
+        
+        if (!(isOnGrid && subdivideWithPolynomials)) {
+          interpolatePoints.push(gridPoint)
+        }
+
+        if (isOnGrid || subdivideWithPolynomials) {
           // calculate WLS Point
           const { point, normal } = this.calculateWLSPoint(gridPoint, wendlandRadius, queryDelegate)
-          if (point) {
-            if (clamp) point.y = BABYLON.MathTools.Clamp(point.y, grid.min.y, grid.max.y)
-            points.push(point)
-            normals.push(normal)
-          } else {
-            points.push(gridPoint)
-            normals.push(defaultNormal)
-          } 
-        } else {
-          // interpolate using bezier surface (deCasteljau)
-          const { point, normal } = this.calculateDeCasteljau(gridPoint, points)
+          if (clamp) point.y = BABYLON.MathTools.Clamp(point.y, grid.min.y, grid.max.y)
           points.push(point)
           normals.push(normal)
         }
       }
     }
-    this.pointCloud = new PointCloud(points, "Surface")
-    this.pointCloud.normals = normals
+
+    if (subdivideWithPolynomials) {
+      this.pointCloud = new PointCloud(points, "Surface")
+      this.pointCloud.normals = normals
+    } else {
+      const tensor = this.solveDeCasteljau(interpolatePoints, points, grid.xCount, grid.zCount, subdivisions)
+      this.pointCloud = new PointCloud(tensor.points, "BTP Surface")
+      this.pointCloud.normals = tensor.normals
+    }
   }
 
-  calculateDeCasteljau(gridPoint : BABYLON.Vector3, points : BABYLON.Vector3[]) {
-    const point = new BABYLON.Vector3(1, 1, 1)
-    const normal = new BABYLON.Vector3(1, 1, 1)
-   
-    // #TODO
+  solveDeCasteljau(interpolatePoints : BABYLON.Vector3[], controlPoints : BABYLON.Vector3[], xCount : number, zCount : number, subdivisions : number) {
+    const f = (n : number) => math.factorial(n) as number
+    const binomial = (n : number, k : number) => f(n)/(f(k) * f(n - k))
+    const b = (n : number, i : number, u : number) => {
+      if (n === 0 && i === 0) return 1
+      if (i > n) return 0
+      
+      return binomial(n, i) * Math.pow(u, i) * Math.pow(1 - u, n - i)
+    }
+    
+    const points : BABYLON.Vector3[] = []
+    const normals : BABYLON.Vector3[] = []
+    interpolatePoints.forEach(point => {
+      const { x : u, z : v } = point
+      let y = 0
 
-    return { point, normal }
+      const m = xCount
+      const n = zCount
+      for (let i = 0; i <= m; i++) {
+        const Bmi = b(m, i, u)
+        
+        for (let j = 0; j <= n; j++) {
+          const Bnj = b(n, j, v)
+
+          const bij = controlPoints[i * (zCount + 1) + j]
+          y += bij.y * Bmi * Bnj
+        }
+      }
+
+      point.y = y
+      points.push(point)
+
+      const normal = new BABYLON.Vector3(0, 1, 0)
+      normals.push(normal)
+    })    
+    return { points, normals }
   }
 
   calculateWLSPoint(gridPoint : BABYLON.Vector3, wendlandRadius : number, queryDelegate : (v2: BABYLON.Vector2) => TreesUtils.Point[]) {
@@ -134,12 +167,6 @@ export class Surface implements IVisualizable {
     const u2v2 = u2 * v2
 
     return [
-      /*[1    , u     , v     , u2    , u*v   , v2    ],
-      [u    , u*u   , u*v   , u3    , u2*v  , v2*u  ],
-      [v    ,   0   ,   0   ,   0   ,   0   ,   0   ],
-      [u*u  ,   0   ,   0   ,   0   ,   0   ,   0   ],
-      [u*v  ,   0   ,   0   ,   0   ,   0   ,   0   ],
-      [v2   , v2*u  , v3    , v2*u2 , v3*u  , v3*v  ]*/
       [1    , u     , v     , u2    , uv    , v2    ],
       [u    , u2    , uv    , u3    , u2v   , v2u   ],
       [v    , uv    , v2    , u2v   , v2u   , v3    ],

@@ -9,6 +9,7 @@ export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
     this.isVisible = show
     
     if (!show) {
+      this.debugNormals(false)
       return
     }
 
@@ -90,6 +91,8 @@ export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
   }
 
   public destroy() {
+    if (this.normalViz) this.normalViz.dispose()
+    if (this.visualization) this.visualization.dispose()
     this.dispose()
   }
 
