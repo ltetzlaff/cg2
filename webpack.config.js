@@ -1,6 +1,4 @@
-const { join, resolve } = require("path")
-const { sync } = require("glob")
-const { ContextReplacementPlugin } = require("webpack")
+const { join } = require("path")
 const buildPath = join(__dirname, "built")
 
 const frontend = {
@@ -23,27 +21,4 @@ const frontend = {
   }
 }
 
-const tests = {
-  entry: sync("./tests/**/*.ts"),
-  output: {
-    filename: "tests.js",
-    path: buildPath
-  },
-  node: {
-    fs: "empty"
-  },
-  module: {
-    rules: [
-      {
-        test: /\.tsx?$/,
-        loader: "ts-loader",
-        exclude: /(node_modules)|(server)/,
-      }
-    ]
-  },
-  resolve: {
-    extensions: [".tsx", ".ts", ".js"]
-  }
-}
-
-module.exports = [ frontend/*, tests*/]
+module.exports = [ frontend ]

@@ -26,11 +26,6 @@ npm run server
 this hosts a webserver accessible at localhost:3000
 models will be fetched from localhost:3000/models/*fileName* where *fileName* is retrieved from [whereever this points](https://github.com/ltetzlaff/cg2/blob/master/server/server.js#L17)
 
-Tests
-```bash
-npm test
-```
-
 ## Contribution
 
 - respect the gitignore (keep out university material and fetch that manually)
