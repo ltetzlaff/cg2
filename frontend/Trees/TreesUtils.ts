@@ -9,29 +9,6 @@ export namespace TreesUtils {
     findIntersecting(tube : Tube) : any
   }
 
-  /** Retrieve minimum and maximum values for x,y,z out of
-   * @param {Array<Array<Number>[3]>} points
-   */
-  export function getExtents(points : BABYLON.Vector3[], pad? : boolean) {
-    const max = new BABYLON.Vector3(-Infinity, -Infinity, -Infinity)
-    const min = new BABYLON.Vector3( Infinity,  Infinity,  Infinity)
-
-    for (let i = 0, len = points.length; i < len; i++) {
-      const v = points[i]
-      ;["x", "y", "z"].forEach(d => {
-        if (v[d] < min[d]) min[d] = v[d]
-        if (v[d] > max[d]) max[d] = v[d]
-      })
-    }
-    if (pad) {
-      const e = .02
-      const padding = new BABYLON.Vector3(e, e, e)
-      return { min: min.subtract(padding), max: max.add(padding)}
-    } else {
-      return { min, max }
-    }
-  }
-
   const EPSILON : number = 10e7
 
   export function isOnLine(p : BABYLON.Vector3, ray : BABYLON.Ray) : boolean {
@@ -62,14 +39,6 @@ export namespace TreesUtils {
 
     distanceToCenter(point : BABYLON.Vector3) : number {
       return point.subtract(this.center).lengthSquared()
-    }
-  }
-
-  export class Point {
-    public box : Box
-
-    constructor(box : Box) {
-      this.box = box
     }
   }
 
