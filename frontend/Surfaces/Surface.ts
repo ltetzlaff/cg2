@@ -2,7 +2,7 @@ import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
 import * as math from "mathjs"
 import { Tree } from "../Trees/Tree"
 import { IVisualizable } from "../Utils"
-import { Grid } from "./Grid"
+import { Grid3D } from "./Grid3D"
 import { PointCloud } from "./PointCloud"
 import { TreesUtils } from "../Trees/TreesUtils"
 
@@ -13,16 +13,13 @@ export class Surface implements IVisualizable {
 
   private cubePrefab : BABYLON.Mesh
 
-  constructor(tree : Tree, grid : Grid) {
+  constructor(tree : Tree, grid : Grid3D) {
     const points : BABYLON.Vector3[] = []
     const normals : BABYLON.Vector3[] = []
 
     const { findingPattern, k, radius, clamp, wendlandRadius, subdivisions, subdivideWithPolynomials } = grid.gridOptions
     
-    const xCount = grid.xCount * subdivisions
-    const zCount = grid.zCount * subdivisions
-    const xResolution = grid.xResolution / subdivisions
-    const zResolution = grid.zResolution / subdivisions
+    const { resolution } = grid
 
     const queryDelegate = (v2: BABYLON.Vector2) => {
       return tree.query(v2, findingPattern, { k, radius })
@@ -31,12 +28,12 @@ export class Surface implements IVisualizable {
     const defaultNormal = new BABYLON.Vector3(1, 1, 1)
     const interpolatePoints : BABYLON.Vector3[] = []
 
-    for (let gx = 0; gx <= xCount; gx++) {
-      for (let gz = 0; gz <= zCount; gz++) {
+    for (let gx = 0; gx <= subdivisions; gx++) {
+      for (let gz = 0; gz <= subdivisions; gz++) {
         const gridPoint = new BABYLON.Vector3(
-          grid.min.x + gx * xResolution,
+          grid.min.x + gx * resolution.x,
           grid.min.y,
-          grid.min.z + gz * zResolution)
+          grid.min.z + gz * resolution.z)
         
         const isOnGrid = gx % subdivisions === 0 && gz % subdivisions === 0
         
@@ -58,13 +55,13 @@ export class Surface implements IVisualizable {
       this.pointCloud = new PointCloud(points, "Surface")
       this.pointCloud.normals = normals
     } else {
-      const tensor = this.solveDeCasteljau(interpolatePoints, points, grid.xCount, grid.zCount, subdivisions)
+      const tensor = this.solveDeCasteljau(interpolatePoints, points, subdivisions)
       this.pointCloud = new PointCloud(tensor.points, "BTP Surface")
       this.pointCloud.normals = tensor.normals
     }
   }
 
-  solveDeCasteljau(interpolatePoints : BABYLON.Vector3[], controlPoints : BABYLON.Vector3[], xCount : number, zCount : number, subdivisions : number) {
+  solveDeCasteljau(interpolatePoints : BABYLON.Vector3[], controlPoints : BABYLON.Vector3[], subdivisions : number) {
     const f = (n : number) => math.factorial(n) as number
     const binomial = (n : number, k : number) => f(n)/(f(k) * f(n - k))
     const b = (n : number, i : number, u : number) => {
@@ -80,29 +77,17 @@ export class Surface implements IVisualizable {
       const { x : u, z : v } = point
       let y = 0
 
-      const m = xCount
-      const n = zCount
-        
-      if (m < n) {
-        for (let i = 0; i <= m; i++) {
-          const Bmi = b(m, i, u)
-          for (let j = 0; j <= n; j++) {
-            const Bnj = b(n, j, v)
-            const bij = controlPoints[i * (zCount + 1) + j]
-            y += bij.y * Bmi * Bnj
-          }
-        }
-      } else {
+      const m = subdivisions
+      const n = subdivisions
+      for (let i = 0; i <= m; i++) {
+        const Bmi = b(m, i, u)
         for (let j = 0; j <= n; j++) {
           const Bnj = b(n, j, v)
-          for (let i = 0; i <= m; i++) {
-            const Bmi = b(m, i, u)
-            const bij = controlPoints[i * (zCount + 1) + j]
-            y += bij.y * Bmi * Bnj
-          }
+          const bij = controlPoints[i * (subdivisions + 1) + j]
+          y += bij.y * Bmi * Bnj
         }
       }
-
+      
       point.y = y
       points.push(point)
 
@@ -118,7 +103,7 @@ export class Surface implements IVisualizable {
     return { points, normals }
   }
 
-  calculateWLSPoint(gridPoint : BABYLON.Vector3, wendlandRadius : number, queryDelegate : (v2: BABYLON.Vector2) => TreesUtils.Point[]) {
+  calculateWLSPoint(gridPoint : BABYLON.Vector3, wendlandRadius : number, queryDelegate : (v2: BABYLON.Vector2) => BABYLON.Vector3[]) {
     const {x, z} = gridPoint
     const nearbyPoints = queryDelegate(new BABYLON.Vector2(x, z))
     if (nearbyPoints.length <= 1) return null
@@ -126,8 +111,7 @@ export class Surface implements IVisualizable {
     const dims = 6
     let m = math.zeros(dims, dims)
     let v = math.zeros(dims)
-    nearbyPoints.forEach(nearbyBox => {
-      const p = nearbyBox.box.center
+    nearbyPoints.forEach(p => {
       const weight = Surface.wendland(gridPoint, p, wendlandRadius)
 
       // add weighted systemMatrix

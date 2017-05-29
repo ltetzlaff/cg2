@@ -1,26 +1,10 @@
 import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
-import { IVisualizable } from "../Utils"
+import { IVisualizable, showMeshsVertexNormals } from "../Utils"
 
 export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
   public visualization : BABYLON.Mesh
-  private normalViz : BABYLON.Mesh
+  public normalVisualization: BABYLON.Mesh
   public fakeNormals : boolean // #DEBUG
-
-  public visualize(show : boolean, material : BABYLON.Material, _scene?: BABYLON.Scene) {
-    this.isVisible = show
-    
-    if (!show) {
-      this.debugNormals(false)
-      return
-    }
-
-    if (!this.fakeNormals) { // #DEBUG
-      this.convertToFlatShadedMesh()
-    }
-
-    this.flatten()
-    this.material = material
-  }
 
   public flatten() {
     // Partly adapted from BABYLON.Mesh.convertToFlatShadedMesh 
@@ -95,35 +79,29 @@ export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
   }
 
   public destroy() {
-    if (this.normalViz) this.normalViz.dispose()
+    if (this.normalVisualization) this.normalVisualization.dispose()
     if (this.visualization) this.visualization.dispose()
     this.dispose()
   }
 
-  debugNormals(show : boolean) {
-    if (this.normalViz) this.normalViz.dispose()
+  visualizeNormals(show : boolean, color : BABYLON.Color3, scene? : BABYLON.Scene) {
+    if (this.normalVisualization) this.normalVisualization.dispose()
     if (!show) return
 
-    const normals = this.getVerticesData(BABYLON.VertexBuffer.NormalKind)
-    const normal = (i : number) => BABYLON.Vector3.FromArray(normals, i)
+    const ls = showMeshsVertexNormals(this)
+    ls.color = color
+    this.normalVisualization = ls
+  }
 
-    const positions = this.getVerticesData(BABYLON.VertexBuffer.PositionKind)
-    const position = (i : number) => BABYLON.Vector3.FromArray(positions, i)
+  public visualize(show : boolean, material : BABYLON.Material, _scene?: BABYLON.Scene) {
+    this.isVisible = show
+    if (!show) return
 
-    const length = .05
-    const lines = []
-
-    for (let i = 0; i < normals.length; i += 3) {
-        const v1 = position(i)
-        const n = normal(i)
-        const v2 = v1.add(n.scaleInPlace(length))
-        lines.push([
-          v1.add(this.position),
-          v2.add(this.position)
-        ])
+    if (!this.fakeNormals) { // #DEBUG
+      this.convertToFlatShadedMesh()
     }
-    const normalLines = BABYLON.MeshBuilder.CreateLineSystem("normalLines", { lines, updatable: false }, this.getScene())
-    normalLines.color = BABYLON.Color3.White()
-    this.normalViz = normalLines
+
+    this.flatten()
+    this.material = material
   }
 }
