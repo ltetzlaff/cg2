@@ -3,9 +3,9 @@ import { TreesUtils } from "./TreesUtils"
 
 export interface Tree {
   children : any[]
-  points : TreesUtils.Point[]
+  points : BABYLON.Vector3[]
 
-  pick(ray : BABYLON.Ray, pattern : TreesUtils.FindingPattern, options : any) : TreesUtils.Point[]
+  pick(ray : BABYLON.Ray, pattern : TreesUtils.FindingPattern, options : any) : BABYLON.Vector3[]
 
-  query(startingPoint : BABYLON.Vector3 | BABYLON.Vector2, pattern : TreesUtils.FindingPattern, options : any) : TreesUtils.Point[]
+  query(startingPoint : BABYLON.Vector3 | BABYLON.Vector2, pattern : TreesUtils.FindingPattern, options : any) : BABYLON.Vector3[]
 }

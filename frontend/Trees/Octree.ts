@@ -1,26 +1,22 @@
 import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "./TreesUtils"
 import { Tree } from "./Tree"
-import { IVisualizable } from "../Utils"
+import { IVisualizable, getExtents } from "../Utils"
 
 export class OctreeOptions {
   public bucketSize : number
   public maxDepth : number
-  public pointSize : BABYLON.Vector3
 
-  constructor(bucketSize : number, maxDepth : number, pointSize : BABYLON.Vector3) {
+  constructor(bucketSize : number, maxDepth : number) {
     this.bucketSize = bucketSize
     this.maxDepth = maxDepth
-    this.pointSize = pointSize
   }
 }
-
-const DEFAULT = new OctreeOptions(5, 5, new BABYLON.Vector3(.05, .05, .05))
 
 export class Octant extends TreesUtils.Box implements TreesUtils.IQueryable {
   private static splitsInto = 8
   public children : Octant[]
-  public points : TreesUtils.Point[]
+  public points : BABYLON.Vector3[]
   public level : number
   private options : OctreeOptions
 
@@ -79,7 +75,7 @@ export class Octant extends TreesUtils.Box implements TreesUtils.IQueryable {
           const octant = new Octant(min, half, this.level + 1, this.options)
           this.children.push(octant)
           this.points = this.points.filter(p => {
-            if (octant.contains(p.box.center)) {
+            if (octant.contains(p)) {
               octant.points.push(p)
               return false
             }
@@ -95,16 +91,12 @@ export class Octant extends TreesUtils.Box implements TreesUtils.IQueryable {
 export class Octree extends Octant implements Tree, IVisualizable {
   public visualization : BABYLON.Mesh[]
 
-  constructor(vertices : BABYLON.Vector3[], options : OctreeOptions = DEFAULT) {
-    let { min, max } = TreesUtils.getExtents(vertices, true)
+  constructor(vertices : BABYLON.Vector3[], options : OctreeOptions) {
+    let { min, max } = getExtents(vertices, true)
     super(min, max.subtract(min), 0, options)
 
     this.visualization = []
-
-    const pSize = options.pointSize
-    this.points = vertices.map((p, i) => {
-      return new TreesUtils.Point(new TreesUtils.Box(p.subtract(pSize.scale(.5)), pSize))
-    })
+    this.points = vertices
     this.trySubdivide()
   }
 
@@ -133,7 +125,7 @@ export class Octree extends Octant implements Tree, IVisualizable {
     this.visualize(false, null, null)
   }
 
-  pick(ray : BABYLON.Ray, pattern : TreesUtils.FindingPattern, options : any) : TreesUtils.Point[] {
+  pick(ray : BABYLON.Ray, pattern : TreesUtils.FindingPattern, options : any) : BABYLON.Vector3[] {
     //console.time("  - finding Start")
     const hitOctants = this.findIntersecting(ray)
     if (!hitOctants) return [] // no octant hit
@@ -143,11 +135,16 @@ export class Octree extends Octant implements Tree, IVisualizable {
       .sort((o1, o2) => o1.r - o2.r)
       .map(o => o.octant)
 
+    const e = .01
+    const epsilon = new BABYLON.Vector3(e, e, e)
+
     let startingPoint : BABYLON.Vector3
     startingPointOctants.some(octant => {
-      const foundInOctant = octant.points.find(p => ray.intersectsBoxMinMax(p.box.min,p.box.max))
+      const foundInOctant = octant.points.find(p => {
+        return ray.intersectsBoxMinMax(p.subtract(epsilon),p.add(epsilon))
+      })
       if (!foundInOctant) return false
-      startingPoint = foundInOctant.box.center
+      startingPoint = foundInOctant
       return true
     })
     //console.timeEnd("  - finding Start")
@@ -155,7 +152,7 @@ export class Octree extends Octant implements Tree, IVisualizable {
     return this.query(startingPoint, pattern, options)
   }
 
-  query(startingPoint : BABYLON.Vector3 | BABYLON.Vector2, pattern : TreesUtils.FindingPattern, options : any) : TreesUtils.Point[] {
+  query(startingPoint : BABYLON.Vector3 | BABYLON.Vector2, pattern : TreesUtils.FindingPattern, options : any) : BABYLON.Vector3[] {
     if (!(options.radius === 0 || options.radius > 0)) {
       options.radius = Number.MAX_VALUE // knearest just needs a point
     }
@@ -172,19 +169,19 @@ export class Octree extends Octant implements Tree, IVisualizable {
     intersectedOctants = this.findIntersecting(volume)
 
     //console.time("  - finding Query")
-    let candidates : TreesUtils.Point[] = []
+    let candidates : BABYLON.Vector3[] = []
     switch (pattern) {
       case TreesUtils.FindingPattern.KNearest:
         intersectedOctants.forEach(octant => {
           candidates.push(...octant.points)
           candidates = candidates
-            .sort((a, b) => volume.distanceToCenter(a.box.center) - volume.distanceToCenter(b.box.center))
+            .sort((a, b) => volume.distanceToCenter(a) - volume.distanceToCenter(b))
             .slice(0, options.k)
         })
         break
       case TreesUtils.FindingPattern.Radius:
         intersectedOctants.forEach(octant => {
-          candidates.push(...octant.points.filter(p => volume.contains(p.box.center)))
+          candidates.push(...octant.points.filter(p => volume.contains(p)))
         })
         break
     }
