@@ -1,11 +1,13 @@
 import * as BABYLON from "../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "./Trees/TreesUtils"
 import { Tree } from "./Trees/Tree"
+import { getExtents } from "./Utils"
 import { Octree, OctreeOptions } from "./Trees/Octree"
 import { PointCloud } from "./Surfaces/PointCloud"
-import { Grid, GridOptions } from "./Surfaces/Grid"
+import { Grid3D, GridOptions } from "./Surfaces/Grid3D"
 import { Surface } from "./Surfaces/Surface"
-import { SurfaceMesh } from "./Surfaces/SurfaceMesh"
+import { ImplicitSamples } from "./Surfaces/ImplicitSamples"
+import { MCMesh, MCAlgo } from "./Surfaces/MarchingCubes"
 import "./OFFFileLoader"
 
 export class Engine {
@@ -16,19 +18,13 @@ export class Engine {
   private sun: BABYLON.Light
   private cam : BABYLON.ArcRotateCamera
 
-  private pSize : BABYLON.Vector3
-  private tree : Octree
-  private octreeOptions : OctreeOptions
   private pointCloud : PointCloud
-  private treeMat : BABYLON.Material
-  private pointMat : BABYLON.Material
-  private gridMat : BABYLON.Material
-  private surfaceMat : BABYLON.Material
-  private surfaceMeshMat : BABYLON.StandardMaterial
+  private mat : any  
   private gridOptions : GridOptions
-  private grid : Grid
+  private grid : Grid3D
   private surface : Surface
-  private surfaceMesh : SurfaceMesh
+  private implicitSamples : ImplicitSamples
+  private mcMesh : MCMesh
 
   constructor(canvas : HTMLCanvasElement) {
     this.canvas = canvas
@@ -36,27 +32,24 @@ export class Engine {
     this.engine.enableOfflineSupport = false
 
     // Setup Scene
-    this.scene = new BABYLON.Scene(this.engine)
-    this.loader = new BABYLON.AssetsManager(this.scene)
-    this.cam = new BABYLON.ArcRotateCamera("Main Cam", -18.1, 1.1, 4.3, BABYLON.Vector3.Zero(), this.scene)
-    this.cam.upperRadiusLimit = 10
-    this.cam.lowerRadiusLimit = .5
+    const s = new BABYLON.Scene(this.engine)
+    this.scene = s
+    this.loader = new BABYLON.AssetsManager(s)
+    this.cam = new BABYLON.ArcRotateCamera("Main Cam", -15.97, 1.22, 2860, BABYLON.Vector3.Zero(), s)
+    this.cam.upperRadiusLimit = 5000
+    this.cam.lowerRadiusLimit = 1000
     this.cam.wheelPrecision = 10
     this.cam.attachControl(this.canvas, false)
-    this.sun = new BABYLON.HemisphericLight("Sun", new BABYLON.Vector3(0, 1, 0), this.scene)
+    this.sun = new BABYLON.HemisphericLight("Sun", new BABYLON.Vector3(0, 1, 0), s)
 
-    this.treeMat = new WireFrameMaterial(BABYLON.Color3.Yellow(), this.scene)
-    this.pointMat = new PointCloudMaterial(BABYLON.Color3.Red(), this.scene)
-    this.gridMat = new WireFrameMaterial(BABYLON.Color3.Blue(), this.scene)
-    this.surfaceMat = new PointCloudMaterial(BABYLON.Color3.Green() ,this.scene)
-    this.surfaceMeshMat = new BABYLON.StandardMaterial("surfaceMesh", this.scene)
-    this.surfaceMeshMat.roughness = .6
-    this.surfaceMeshMat.diffuseColor = BABYLON.Color3.Purple()
-    this.surfaceMeshMat.wireframe = false
-
-    const s = .005
-    this.pSize = new BABYLON.Vector3(s,s,s)
-    this.octreeOptions = new OctreeOptions(60, 5, this.pSize)
+    this.mat = {
+      points: new PointCloudMaterial("red", s),
+      tree: new WireFrameMaterial("yellow", s),
+      grid: new WireFrameMaterial("blue", s),
+      implicitSample: new PointCloudMaterial("green", s),
+      mcMesh: new Material("purple", s)
+    }
+    
     this.gridOptions = new GridOptions()
 
     const ground = BABYLON.MeshBuilder.CreateGround("Ground", {
@@ -80,112 +73,89 @@ export class Engine {
 
     let sel = ""
     const go = this.gridOptions
+    go.findingPattern = TreesUtils.FindingPattern.Radius
 
-    sel = "#pResolution"
-    go.resolution = getFloat($(sel))
-    bindOnChangeNumeric(sel, n => {
-      go.resolution = n
-      this.buildGrid()
+    // Point Cloud
+    sel = "#pVisualizePointCloud"
+    bindOnChangeCheckbox(sel, b => {
+      if (this.pointCloud) this.pointCloud.visualize(b, this.mat.points)
     })
 
+    sel = "#pVisualizeVertexNormals"
+    bindOnChangeCheckbox(sel, b => {
+      if (this.pointCloud) this.pointCloud.visualizeNormals(b, getColor("white"), this.scene)
+    })
+
+    sel = "#pVisualizeTree"
+    bindOnChangeCheckbox(sel, b => {
+      if (this.pointCloud) this.pointCloud.tree.visualize(b, this.mat.tree, this.scene)
+    })
+
+    // Grid3D
     sel = "#pSubdivisions"
     go.subdivisions = getFloat($(sel))
     bindOnChangeNumeric(sel, n => {
       go.subdivisions = n
-      this.buildSurface()
+      this.buildGrid()
     })
 
-    sel = "query"
-    go.findingPattern = TreesUtils.FindingPattern[getRadioValue(sel)]
-    bindOnChangeRadio(sel, s => {
-      go.findingPattern = TreesUtils.FindingPattern[s]
-      this.buildSurface()
-    })
-
-    sel = "subdivideWith"
-    go.subdivideWithPolynomials = getRadioValue(sel) === "Polynomials"
-    bindOnChangeRadio(sel, s => {
-      go.subdivideWithPolynomials = s === "Polynomials"
-      this.buildSurface()
-    })
-
-    sel = "#pKNearest"
-    go.k = getFloat($(sel)) | 0
+    sel = "#pBBPadding"
+    go.subdivisions = getFloat($(sel))
     bindOnChangeNumeric(sel, n => {
-      go.k = n | 0
-      this.buildSurface()
+      go.padding = n
+      this.buildGrid()
     })
 
+    sel = "#pVisualizeGrid"
+    bindOnChangeCheckbox(sel, b => {
+      if (this.grid) this.grid.visualize(b, this.mat.Grid3D, this.scene)
+    })
+
+    // Implicit Sampling
     sel = "#pRadius"
     go.radius = getFloat($(sel))
     bindOnChangeNumeric(sel, n => {
       go.radius = n
-      this.buildSurface()
+      this.runImplicitSampling()
     })
 
     sel = "#pWendlandRadius"
     go.wendlandRadius = getFloat($(sel))
     bindOnChangeNumeric(sel, n => {
       go.wendlandRadius = n
-      this.buildSurface()
+      this.runImplicitSampling()
     })
 
-    sel = "#pClamp"
-    go.clamp = getCheckbox($(sel))
+    sel = "#pRunImplicitSampling"
+    go.runImplicitSampling= getCheckbox($(sel))
     bindOnChangeCheckbox(sel, b => {
-      go.clamp = b
-      this.buildSurface()
+      go.runImplicitSampling = b
+      this.runImplicitSampling()
     })
 
-    sel = "#pBuildGrid"
-    go.buildSurface = getCheckbox($(sel))
+    sel = "#pVisualizeImplicit"
     bindOnChangeCheckbox(sel, b => {
-      go.buildGrid = b
-      this.buildGrid()
+      if (this.implicitSamples) this.implicitSamples.visualize(b, this.mat.implicitSamples, this.scene)
     })
 
-    sel = "#pBuildSurface"
-    go.buildSurface = getCheckbox($(sel))
-    bindOnChangeCheckbox(sel, b => {
-      go.buildSurface = b
-      this.buildSurface()
+    // Marching Cubes
+    sel = "mcAlgo"
+    go.mcAlgo = MCAlgo[getRadioValue(sel)]
+    bindOnChangeRadio(sel, s => {
+      go.mcAlgo = MCAlgo[s]
+      this.buildMCMesh()
     })
 
-    sel = "#pBuildSurfaceMesh"
-    go.buildSurfaceMesh = getCheckbox($(sel))
+    sel = "#pBuildMCMesh"
+    go.buildMCMesh = getCheckbox($(sel))
     bindOnChangeCheckbox(sel, b => {
-      go.buildSurfaceMesh = b
-      this.buildSurfaceMesh()
+      go.buildMCMesh = b
+      this.buildMCMesh()
     })
 
-    sel = "#pVisualizePointCloud"
+    sel = "#pVisualizeMCMesh"
     bindOnChangeCheckbox(sel, b => {
-      if (this.pointCloud) this.pointCloud.visualize(b, this.pointMat)
-    })
-
-    sel = "#pVisualizeTree"
-    bindOnChangeCheckbox(sel, b => {
-      if (this.tree) this.tree.visualize(b, this.treeMat, this.scene)
-    })
-
-    sel = "#pVisualizeGrid"
-    bindOnChangeCheckbox(sel, b => {
-      if (this.grid) this.grid.visualize(b, this.gridMat, this.scene)
-    })
-
-    sel = "#pVisualizeSurface"
-    bindOnChangeCheckbox(sel, b => {
-      if (this.surface) this.surface.visualize(b, this.surfaceMat, this.scene)
-    })
-
-    sel = "#pVisualizeSurfaceVertexNormals"
-    bindOnChangeCheckbox(sel, b => {
-      if (this.surfaceMesh) this.surfaceMesh.debugNormals(b)
-    })
-
-    sel = "#pVisualizeSurfaceMesh"
-    bindOnChangeCheckbox(sel, b => {
-      if (this.surfaceMesh) this.surfaceMesh.visualize(b, this.surfaceMeshMat, this.scene)
+      if (this.mcMesh) this.mcMesh.visualize(b, this.mat.MCMesh, this.scene)
     })
 
     bindOnChangeFile("#load", fl => {
@@ -202,63 +172,39 @@ export class Engine {
     })
   }
 
-  buildTree() {
-    this.tree = new Octree(this.pointCloud.vertices, this.octreeOptions)
-  }
-
   buildGrid() {
     if (this.grid) this.grid.destroy()
 
-    if (!this.gridOptions.buildGrid) {
-      this.buildSurface()
-      return
-    }
-
+    if (!this.gridOptions.buildGrid) return
     if (!this.pointCloud || this.pointCloud.vertices.length === 0) return
-    const { min, max } = TreesUtils.getExtents(this.pointCloud.vertices)
 
-    console.time("-- built Grid in:")
-    this.grid = new Grid(min, max, this.gridOptions)
-    console.timeEnd("-- built Grid in:")
+    const { min, max } = getExtents(this.pointCloud.vertices)
 
-    this.grid.visualize(getCheckbox($("#pVisualizeGrid")), this.gridMat, this.scene)
+    console.time("-- built Grid3D in:")
+    this.grid = new Grid3D(min, max, this.gridOptions)
+    console.timeEnd("-- built Grid3D in:")
 
-    this.buildSurface()
+    this.grid.visualize(getCheckbox($("#pVisualizeGrid")), this.mat.grid, this.scene)
+
+    this.runImplicitSampling()
   }
 
-  buildSurface() {
-    if (this.surface) this.surface.destroy()
+  runImplicitSampling() {
+    if (this.implicitSamples) this.implicitSamples.destroy()
 
-    if (!this.gridOptions.buildSurface) {
-      this.buildSurfaceMesh()
-      return
-    }
+    if (!this.gridOptions.runImplicitSampling) return
 
-    if (!this.grid) return
-    console.time("-- built Surface in:")
-    this.surface = new Surface(this.tree, this.grid)
-    console.timeEnd("-- built Surface in:")
+    // #TODO
 
-    this.surface.visualize(getCheckbox($("#pVisualizeSurface")), this.surfaceMat,this.scene)
-    this.buildSurfaceMesh()
+    this.buildMCMesh()
   }
 
-  buildSurfaceMesh() {
-    if (this.surfaceMesh) this.surfaceMesh.destroy()
+  buildMCMesh() {
+    if (this.mcMesh) this.mcMesh.destroy()
 
-    if (!this.gridOptions.buildSurfaceMesh) {
-      return
-    }
+    if (!this.gridOptions.buildMCMesh) return
 
-    if (!this.surface || !this.grid) return
-    console.time("-- built SurfaceMesh in:")
-    this.surfaceMesh = new SurfaceMesh("reconstructed surface", this.scene)
-    this.surface.pointCloud.toTriangleMesh(this.grid, this.surfaceMesh)
-    console.timeEnd("-- built SurfaceMesh in:")
-
-    this.surfaceMesh.fakeNormals = getRadioValue("subdivideWith") === "Polynomials"
-    this.surfaceMesh.visualize(getCheckbox($("#pVisualizeSurfaceMesh")), this.surfaceMeshMat)
-    this.surfaceMesh.debugNormals(getCheckbox($("#pVisualizeSurfaceVertexNormals")))
+    // #TODO  
   }
 
   load(file : string, asPointCloud : boolean = false) : void {
@@ -266,33 +212,48 @@ export class Engine {
       // Remove old meshes
       this.scene.meshes.forEach(m => m.dispose())
       //if (this.scene.meshes.length) this.scene.meshes = []
+      console.log(this.scene.meshes)
 
       if (asPointCloud) {
         this.pointCloud = new PointCloud(meshes[0] as BABYLON.Mesh, file)
-        this.pointCloud.visualize(getCheckbox($("#pVisualizePointCloud")), this.pointMat)
-        this.buildTree()
+        this.pointCloud.visualize(getCheckbox($("#pVisualizePointCloud")), this.mat.points)
+        this.pointCloud.visualizeNormals(getCheckbox($("#pVisualizeVertexNormals")), getColor("white"), this.scene)
         this.buildGrid()
       } else {
-        meshes[0].material = this.pointMat
+        meshes[0].material = this.mat.points
         this.scene.meshes.push(meshes[0])
       }
     })
   }
 }
 
+function capitalize(str : string) {
+  return str.charAt(0).toUpperCase() + str.slice(1)
+}
+function getColor(str : string) {
+  return BABYLON.Color3[capitalize(str)]()
+}
+
+class Material extends BABYLON.StandardMaterial {
+  constructor(color : string, scene : BABYLON.Scene) {
+    super("mat", scene)
+    this.diffuseColor = getColor(color)
+  }
+}
+
 class PointCloudMaterial extends BABYLON.StandardMaterial {
-  constructor(color : BABYLON.Color3, scene : BABYLON.Scene) {
-    super("points", scene)
-    this.diffuseColor = color
+  constructor(color : string, scene : BABYLON.Scene) {
+    super("pointCloud", scene)
+    this.diffuseColor = getColor(color)
     this.pointsCloud = true
     this.pointSize = 4
   }
 }
 
 class WireFrameMaterial extends BABYLON.StandardMaterial {
-  constructor(color : BABYLON.Color3, scene : BABYLON.Scene) {
+  constructor(color : string, scene : BABYLON.Scene) {
     super("wireframe", scene)
-    this.diffuseColor = color
+    this.diffuseColor = getColor(color)
 	  this.wireframe = true
   }
 }
