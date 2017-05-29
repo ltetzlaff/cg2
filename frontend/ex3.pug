@@ -1,0 +1,34 @@
+extends layout.pug
+
+block content
+  #main
+    canvas#c
+  #details
+    section
+      h3 Point Cloud
+      +checkbox("pVisualizePointCloud", "Draw Point Cloud", true)
+      +checkbox("pVisualizeVertexNormals", "Draw Vertex Normals", true)
+      +checkbox("pVisualizeTree", "Draw Tree")
+
+      h3 Grid
+      +number("pSubdivisions", "Subdivisions", 5, 1)
+      +number("pBBPadding", "Bounding Box Padding%", 0.1, .05)
+      +checkbox("pVisualizeGrid", "Draw Grid", true)      
+
+      h3 Implicit Sampling
+      +number("pRadius", "Picking Radius", .2, .05)              
+      +number("pWendlandRadius", "Wendland Radius", 1.1, .05)              
+      +checkbox("pRunImplicitSampling", "Run Implicit Sampling", true)
+      +checkbox("pVisualizeImplicit", "Draw Sampling Results", true)
+      
+      h3 Marching Cubes
+      +radio("mcAlgo", "MarchingCubes", true)
+      +radio("mcAlgo", "EnhancedMarchingCubes")
+      +checkbox("pBuildMCMesh", "Run Marching Cubes", true)      
+      +checkbox("pVisualizeMCMesh", "Draw Marching Cube Mesh", true)
+            
+    section
+      h3 Load
+      +file("load", "Load Model")
+      +button("load", "cat", "attachment")
+      +button("load", "horse", "attachment")

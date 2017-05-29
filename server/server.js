@@ -11,10 +11,10 @@ e.set("view engine", "pug")
 e.set("views", "frontend")
 
 // Routes
-e.get("/", (req, res) => res.render("ex2.pug"))
+e.get("/", (req, res) => res.render("ex3.pug"))
 
 e.get("/models/:file", (req, res) => {
-  readFile(join(".", "ex2", "pointdata", req.params.file), "utf8", (err, data) => {
+  readFile(join(".", "ex3", "ex3_data", req.params.file), "utf8", (err, data) => {
     if (err) {
       console.error(err)
       res.sendStatus(500).end(err.toString())
