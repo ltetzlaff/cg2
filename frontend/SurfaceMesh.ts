@@ -4,6 +4,7 @@ import { IVisualizable } from "./Utils"
 export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
   public visualization : BABYLON.Mesh
   private normalViz : BABYLON.Mesh
+  public fakeNormals : boolean // #DEBUG
 
   public visualize(show : boolean, material : BABYLON.Material, _scene?: BABYLON.Scene) {
     this.isVisible = show
@@ -13,7 +14,10 @@ export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
       return
     }
 
-    //this.convertToFlatShadedMesh()
+    if (!this.fakeNormals) { // #DEBUG
+      this.convertToFlatShadedMesh()
+    }
+
     this.flatten()
     this.material = material
   }

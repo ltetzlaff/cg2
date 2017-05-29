@@ -256,6 +256,7 @@ export class Engine {
     this.surface.pointCloud.toTriangleMesh(this.grid, this.surfaceMesh)
     console.timeEnd("-- built SurfaceMesh in:")
 
+    this.surfaceMesh.fakeNormals = getRadioValue("subdivideWith") === "Polynomials"
     this.surfaceMesh.visualize(getCheckbox($("#pVisualizeSurfaceMesh")), this.surfaceMeshMat)
     this.surfaceMesh.debugNormals(getCheckbox($("#pVisualizeSurfaceVertexNormals")))
   }
