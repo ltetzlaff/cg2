@@ -82,21 +82,37 @@ export class Surface implements IVisualizable {
 
       const m = xCount
       const n = zCount
-      for (let i = 0; i <= m; i++) {
-        const Bmi = b(m, i, u)
         
+      if (m < n) {
+        for (let i = 0; i <= m; i++) {
+          const Bmi = b(m, i, u)
+          for (let j = 0; j <= n; j++) {
+            const Bnj = b(n, j, v)
+            const bij = controlPoints[i * (zCount + 1) + j]
+            y += bij.y * Bmi * Bnj
+          }
+        }
+      } else {
         for (let j = 0; j <= n; j++) {
           const Bnj = b(n, j, v)
-
-          const bij = controlPoints[i * (zCount + 1) + j]
-          y += bij.y * Bmi * Bnj
+          for (let i = 0; i <= m; i++) {
+            const Bmi = b(m, i, u)
+            const bij = controlPoints[i * (zCount + 1) + j]
+            y += bij.y * Bmi * Bnj
+          }
         }
       }
 
       point.y = y
       points.push(point)
 
-      const normal = new BABYLON.Vector3(0, 1, 0)
+      // #TODO!
+      const yt1 = 0
+      const yt2 = 0
+      
+      const t1 = new BABYLON.Vector3(0, yt1, 1)
+      const t2 = new BABYLON.Vector3(1, yt2, 0)
+      const normal = BABYLON.Vector3.Cross(t1, t2)
       normals.push(normal)
     })    
     return { points, normals }
