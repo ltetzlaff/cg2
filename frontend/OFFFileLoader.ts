@@ -23,27 +23,27 @@ export class OFFFileLoader implements BABYLON.ISceneLoaderPlugin {
     const whitespace = /\s+/
 
     // Prepare Mesh Structure
-    const firstLine = lines.shift()
+    let firstLine = lines.shift()
+
+    if (firstLine.startsWith("NOFF")) firstLine = lines.shift()
+
     //console.log(firstLine.trim().split(" "))
     const [numVertices, numFaces] : number[] = firstLine.trim().split(whitespace).map(Number)
     const positionsFlat : number[] = []
+    const normalsFlat : number[] = []
     const faces : number[] = []
 
     lines.forEach((line, i) => {
       const splits : string[] = line.trim().split(whitespace)
       if (i < numVertices) {
-        const [x, z, y] = splits.map(parseFloat) // y and z exchanged
+        const [x, z, y, nx, nz, ny] = splits.map(parseFloat) // y and z exchanged
         positionsFlat.push(...[x, y, z])
+        if (splits.length >= 6) normalsFlat.push(...[nx, ny, nz])
       } else if (i < numVertices + numFaces) {
         splits.shift()
         faces.push(...splits.map(Number))
       }
     })
-
-    const normalsFlat : number[] = []
-    for (let i = 0; i < positionsFlat.length; i++) {
-      normalsFlat[i] = 1
-    }
 
     const vertexData = new BABYLON.VertexData()
     vertexData.positions = positionsFlat
