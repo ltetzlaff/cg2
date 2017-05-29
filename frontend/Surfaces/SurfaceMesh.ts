@@ -1,5 +1,5 @@
-import * as BABYLON from "../node_modules/babylonjs/babylon.module"
-import { IVisualizable } from "./Utils"
+import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
+import { IVisualizable } from "../Utils"
 
 export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
   public visualization : BABYLON.Mesh

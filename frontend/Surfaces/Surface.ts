@@ -1,10 +1,10 @@
-import * as BABYLON from "../node_modules/babylonjs/babylon.module"
+import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
 import * as math from "mathjs"
-import { Tree } from "./Trees/Tree"
-import { IVisualizable } from "./Utils"
+import { Tree } from "../Trees/Tree"
+import { IVisualizable } from "../Utils"
 import { Grid } from "./Grid"
 import { PointCloud } from "./PointCloud"
-import { TreesUtils } from "./Trees/TreesUtils"
+import { TreesUtils } from "../Trees/TreesUtils"
 
 
 export class Surface implements IVisualizable {
