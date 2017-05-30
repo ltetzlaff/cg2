@@ -15,7 +15,8 @@ export class Engine {
   private engine: BABYLON.Engine
   public scene : BABYLON.Scene
   private loader : BABYLON.AssetsManager
-  private sun: BABYLON.Light
+  private light: BABYLON.Light
+  private lightPivot : BABYLON.Mesh
   private cam : BABYLON.ArcRotateCamera
 
   private pointCloud : PointCloud
@@ -40,7 +41,11 @@ export class Engine {
     this.cam.lowerRadiusLimit = 1000
     this.cam.wheelPrecision = 10
     this.cam.attachControl(this.canvas, false)
-    this.sun = new BABYLON.HemisphericLight("Sun", new BABYLON.Vector3(0, 1, 0), s)
+    //new BABYLON.HemisphericLight("sun", new BABYLON.Vector3(0, 1, 0), s)
+    this.light = new BABYLON.PointLight("light", new BABYLON.Vector3(0, 250, 1000), s)
+    this.lightPivot = new BABYLON.Mesh("lightPivot", s)
+    this.lightPivot.setAbsolutePosition(new BABYLON.Vector3(0, 0, 1000))
+    this.light.parent = this.lightPivot
 
     this.mat = {
       points: new PointCloudMaterial("red", s),
@@ -67,7 +72,7 @@ export class Engine {
   setupUIBindings() {
     $$(".load").forEach((el : Element) => {
       el.addEventListener("click", () => {
-        this.load(el.getAttribute("value") + ".off", true)
+        this.load(el.getAttribute("value") + ".off", false)
       })
     })
 
@@ -170,6 +175,20 @@ export class Engine {
       if (ev.keyCode == 65) this.cam.alpha += .1 // a
       if (ev.keyCode == 68) this.cam.alpha -= .1 // d
     })
+
+    var lastX = 0
+    var lastY = 0
+    window.addEventListener("mousemove", ev => {
+      const factor = 1/50
+      const dx = (ev.offsetX - lastX) * factor
+      const dy = (ev.offsetY - lastY) * factor
+      lastX = ev.offsetX
+      lastY = ev.offsetY
+      if (ev.ctrlKey) {
+        if (lastX !== 0) this.lightPivot.rotate(new BABYLON.Vector3(0, 1, 0), dx)
+        if (lastY !== 0) this.lightPivot.rotate(new BABYLON.Vector3(0, 0, 1), dy)
+      }
+    })
   }
 
   buildGrid() {
@@ -210,9 +229,8 @@ export class Engine {
   load(file : string, asPointCloud : boolean = false) : void {
     BABYLON.SceneLoader.ImportMesh(file, "/models/", file, this.scene, (meshes : BABYLON.AbstractMesh[]) => {
       // Remove old meshes
-      this.scene.meshes.forEach(m => m.dispose())
+      //this.scene.meshes.forEach(m => m.dispose())
       //if (this.scene.meshes.length) this.scene.meshes = []
-      console.log(this.scene.meshes)
 
       if (asPointCloud) {
         this.pointCloud = new PointCloud(meshes[0] as BABYLON.Mesh, file)
