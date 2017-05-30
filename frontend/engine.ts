@@ -50,8 +50,7 @@ export class Engine {
     this.mat = {
       points: new PointCloudMaterial("red", s),
       tree: new WireFrameMaterial("yellow", s),
-      //grid: new WireFrameMaterial("blue", s),
-      grid: new PointCloudMaterial("blue", s),
+      grid: new PointCloudMaterial("black", s, true),
       implicitSample: new PointCloudMaterial("green", s),
       mcMesh: new Material("purple", s)
     }
@@ -261,11 +260,12 @@ class Material extends BABYLON.StandardMaterial {
 }
 
 class PointCloudMaterial extends BABYLON.StandardMaterial {
-  constructor(color : string, scene : BABYLON.Scene) {
+  constructor(color : string, scene : BABYLON.Scene, unlit = false) {
     super("pointCloud", scene)
     this.diffuseColor = getColor(color)
     this.pointsCloud = true
     this.pointSize = 4
+    this.disableLighting = unlit // enable this if you want to hide heavy zfighting
   }
 }
 
