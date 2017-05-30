@@ -21,7 +21,8 @@ export class GridOptions {
 }
 
 export class Grid3D implements IVisualizable {
-  public visualization : BABYLON.Mesh
+  public visualization : BABYLON.InstancedMesh[]
+  private boxPrefab : BABYLON.Mesh
 
   public gridOptions : GridOptions
   public min : BABYLON.Vector3
@@ -37,31 +38,50 @@ export class Grid3D implements IVisualizable {
     this.max = max.add(pad)
     this.resolution = diff
       .scale(1 + 2 * gridOptions.padding)
-      .scale(gridOptions.subdivisions)
+      .scale(1/gridOptions.subdivisions)
+    console.log(this.gridOptions.subdivisions)
   }
 
-  visualize(show : boolean, material : BABYLON.Material, scene?: BABYLON.Scene) {
-    if (!show) {
-      if (this.visualization) this.visualization.dispose()
-      return
+  visualize(show : boolean, material : BABYLON.Material, scene: BABYLON.Scene) {
+    const v = this.visualization
+    if (v && v.length !== 0) v.forEach(m => m.dispose())
+    
+    if (!show) return
+
+    const r = this.resolution          
+    if (!this.boxPrefab) {
+      const box = BABYLON.MeshBuilder.CreateBox("Grid3D", {
+        width: r.x, height: r.y, depth: r.z
+      }, scene)
+      box.material = material
+      box.isVisible = false
+      this.boxPrefab = box
     }
 
-    const N = this.gridOptions.subdivisions
-    const plane = BABYLON.MeshBuilder.CreateTiledGround("Grid3D", {
-      xmin: this.min.x, xmax: this.max.x,
-      zmin: this.min.z, zmax: this.max.z,
-      subdivisions: { w: N, h: N }
-    }, scene)
-    plane.position.y = this.min.y
-    plane.material = material
-    this.visualization = plane
+    this.visualization = []
+    this.iterateVertices(v => {
+      const cell = this.boxPrefab.createInstance("gridCell")
+      const cellPosition = v.add(r.scale(.5)) // absolute position goes from center
+      cell.setAbsolutePosition(cellPosition)
+      this.visualization.push(cell)
+    }, false)
   }
 
-  iterate(cb : (x : number, y : number, z : number) => void) {
-    const N = this.gridOptions.subdivisions
-    for (let x = 0; x <= N; x++) {
-      for (let y = 0; y <= N; y++) {
-        for (let z = 0; z <= N; z++) {
+  iterateVertices(cb : (v : BABYLON.Vector3) => void, doLastRow = true) {
+    const res = this.resolution
+    const min = this.min
+    this.iterateIndices((x, y, z) => {
+      const vertex = res.multiplyByFloats(x, y, z).add(min)
+      cb(vertex)
+    }, doLastRow)
+  }
+
+  iterateIndices(cb : (x : number, y : number, z : number) => void, doLastRow = true) {
+    const o = doLastRow ? 1 : 0
+    const N = this.gridOptions.subdivisions + o
+    for (let x = 0; x < N; x++) {
+      for (let y = 0; y < N; y++) {
+        for (let z = 0; z < N; z++) {
           cb(x, y, z)
         }
       }

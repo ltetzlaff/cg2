@@ -50,7 +50,8 @@ export class Engine {
     this.mat = {
       points: new PointCloudMaterial("red", s),
       tree: new WireFrameMaterial("yellow", s),
-      grid: new WireFrameMaterial("blue", s),
+      //grid: new WireFrameMaterial("blue", s),
+      grid: new PointCloudMaterial("blue", s),
       implicitSample: new PointCloudMaterial("green", s),
       mcMesh: new Material("purple", s)
     }
