@@ -21,7 +21,7 @@ export class PointCloud implements IVisualizable {
       
       const { positions, normals } = getVertexData(data)
       this.vertices = positions
-      this.normals= normals
+      this.normals = normals
     } else {
       // Assert Vector3[]
       this.vertices = data

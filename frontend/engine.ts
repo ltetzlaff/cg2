@@ -72,7 +72,7 @@ export class Engine {
   setupUIBindings() {
     $$(".load").forEach((el : Element) => {
       el.addEventListener("click", () => {
-        this.load(el.getAttribute("value") + ".off", false)
+        this.load(el.getAttribute("value") + ".off", true)
       })
     })
 
@@ -105,7 +105,7 @@ export class Engine {
     })
 
     sel = "#pBBPadding"
-    go.subdivisions = getFloat($(sel))
+    go.padding = getFloat($(sel))
     bindOnChangeNumeric(sel, n => {
       go.padding = n
       this.buildGrid()
