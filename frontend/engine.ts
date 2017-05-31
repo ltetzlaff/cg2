@@ -212,8 +212,10 @@ export class Engine {
     if (this.implicitSamples) this.implicitSamples.destroy()
 
     if (!this.gridOptions.runImplicitSampling) return
+    if (!(this.grid && this.pointCloud)) return
 
-    // #TODO
+    this.implicitSamples = new ImplicitSamples(this.pointCloud, this.grid)
+    this.implicitSamples.visualize(getCheckbox($("#pVisualizeImplicit")), this.mat.implicitSample, this.scene)
 
     this.buildMCMesh()
   }
