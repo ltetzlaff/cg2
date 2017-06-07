@@ -12,7 +12,7 @@ export class PointCloud implements IVisualizable {
 
   public tree : Octree
 
-  constructor(data : BABYLON.Mesh | BABYLON.Vector3[], name? : string) {
+  constructor(data : BABYLON.Mesh | BABYLON.Vector3[], name? : string, scale = 1) {
     this.name = name || "PointCloud"
     this.normals = []
 
@@ -27,6 +27,10 @@ export class PointCloud implements IVisualizable {
       this.vertices = data
 
       // make visualization later because it requires reference to scene
+    }
+
+    if (scale !== 1) {
+      this.vertices.forEach(v => v.scaleInPlace(scale))
     }
 
     const opts = new OctreeOptions(60, 5)    

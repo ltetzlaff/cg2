@@ -36,30 +36,26 @@ export class Engine {
     const s = new BABYLON.Scene(this.engine)
     this.scene = s
     this.loader = new BABYLON.AssetsManager(s)
-    this.cam = new BABYLON.ArcRotateCamera("Main Cam", -15.97, 1.22, 2860, BABYLON.Vector3.Zero(), s)
-    this.cam.upperRadiusLimit = 5000
-    this.cam.lowerRadiusLimit = 1000
+    this.cam = new BABYLON.ArcRotateCamera("Main Cam", -15.97, 1.22, 28.6, BABYLON.Vector3.Zero(), s)
+    this.cam.upperRadiusLimit = 50
+    this.cam.lowerRadiusLimit = 10
     this.cam.wheelPrecision = 10
     this.cam.attachControl(this.canvas, false)
     //new BABYLON.HemisphericLight("sun", new BABYLON.Vector3(0, 1, 0), s)
-    this.light = new BABYLON.PointLight("light", new BABYLON.Vector3(0, 250, 1000), s)
+    this.light = new BABYLON.PointLight("light", new BABYLON.Vector3(0, 2.5, 10), s)
     this.lightPivot = new BABYLON.Mesh("lightPivot", s)
-    this.lightPivot.setAbsolutePosition(new BABYLON.Vector3(0, 0, 1000))
+    this.lightPivot.setAbsolutePosition(new BABYLON.Vector3(0, 0, 10))
     this.light.parent = this.lightPivot
 
     this.mat = {
       points: new PointCloudMaterial("red", s),
       tree: new WireFrameMaterial("yellow", s),
-      grid: new PointCloudMaterial("black", s, true),
-      implicitSample: new PointCloudMaterial("green", s),
+      grid: new PointCloudMaterial("black", s),
+      implicitSamples: new PointCloudMaterial("green", s),
       mcMesh: new Material("purple", s)
     }
     
     this.gridOptions = new GridOptions()
-
-    const ground = BABYLON.MeshBuilder.CreateGround("Ground", {
-      width: 5, height: 5, subdivisions: 1
-    }, this.scene)
   }
 
   run() : void {
@@ -198,6 +194,7 @@ export class Engine {
     if (!this.pointCloud || this.pointCloud.vertices.length === 0) return
 
     const { min, max } = getExtents(this.pointCloud.vertices)
+    console.log(max.subtract(min))
 
     console.time("-- built Grid3D in:")
     this.grid = new Grid3D(min, max, this.gridOptions)
@@ -215,7 +212,9 @@ export class Engine {
     if (!(this.grid && this.pointCloud)) return
 
     this.implicitSamples = new ImplicitSamples(this.pointCloud, this.grid)
-    this.implicitSamples.visualize(getCheckbox($("#pVisualizeImplicit")), this.mat.implicitSample, this.scene)
+    this.implicitSamples.sample(this.grid)
+
+    this.implicitSamples.visualize(getCheckbox($("#pVisualizeImplicit")), this.mat.implicitSamples, this.scene)
 
     this.buildMCMesh()
   }
@@ -232,10 +231,11 @@ export class Engine {
     BABYLON.SceneLoader.ImportMesh(file, "/models/", file, this.scene, (meshes : BABYLON.AbstractMesh[]) => {
       // Remove old meshes
       //this.scene.meshes.forEach(m => m.dispose())
-      //if (this.scene.meshes.length) this.scene.meshes = []
+      if (this.scene.meshes.length) this.scene.meshes = []
 
       if (asPointCloud) {
-        this.pointCloud = new PointCloud(meshes[0] as BABYLON.Mesh, file)
+        const scale = file === "cat.off" ? .01 : 1
+        this.pointCloud = new PointCloud(meshes[0] as BABYLON.Mesh, file, scale)
         this.pointCloud.visualize(getCheckbox($("#pVisualizePointCloud")), this.mat.points)
         this.pointCloud.visualizeNormals(getCheckbox($("#pVisualizeVertexNormals")), getColor("white"), this.scene)
         this.buildGrid()
