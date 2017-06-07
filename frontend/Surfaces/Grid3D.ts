@@ -1,6 +1,7 @@
 import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
 import { TreesUtils } from "../Trees/TreesUtils"
 import { IVisualizable } from "../Utils"
+import { PointCloud } from "./PointCloud"
 import { MCAlgo } from "./MarchingCubes"
 
 export class GridOptions {
@@ -21,8 +22,7 @@ export class GridOptions {
 }
 
 export class Grid3D implements IVisualizable {
-  public visualization : BABYLON.InstancedMesh[]
-  private boxPrefab : BABYLON.Mesh
+  public visualization : BABYLON.Mesh
 
   public gridOptions : GridOptions
   public min : BABYLON.Vector3
@@ -39,50 +39,60 @@ export class Grid3D implements IVisualizable {
     this.resolution = diff
       .scale(1 + 2 * gridOptions.padding)
       .scale(1/gridOptions.subdivisions)
-    console.log(this.gridOptions.subdivisions)
   }
 
   visualize(show : boolean, material : BABYLON.Material, scene: BABYLON.Scene) {
-    const v = this.visualization
-    if (v && v.length !== 0) v.forEach(m => m.dispose())
-    
-    if (!show) return
+    if (this.visualization) this.visualization.isVisible = show
 
-    const r = this.resolution          
-    if (!this.boxPrefab) {
-      const box = BABYLON.MeshBuilder.CreateBox("Grid3D", {
-        width: r.x, height: r.y, depth: r.z
-      }, scene)
-      box.material = material
-      box.isVisible = false
-      this.boxPrefab = box
+    if (!show) {
+      return
     }
 
-    this.visualization = []
-    this.iterateVertices(v => {
-      const cell = this.boxPrefab.createInstance("gridCell")
-      const cellPosition = v.add(r.scale(.5)) // absolute position goes from center
-      cell.setAbsolutePosition(cellPosition)
-      this.visualization.push(cell)
-    }, false)
+    if (!this.visualization) {
+      this.visualization = new BABYLON.Mesh("surfaceVisualization", scene)
+      
+      const unitVector = new BABYLON.Vector3(1, 1, 1)
+      const positionsFlat : number[] = []
+      const normalsFlat : number[] = []
+      
+      this.iterateVertices((p, j) => {
+        const i = j*3
+        positionsFlat[i]   = p.x
+        positionsFlat[i+1] = p.y
+        positionsFlat[i+2] = p.z
+        const n = unitVector
+        normalsFlat[i]   = n.x
+        normalsFlat[i+1] = n.y
+        normalsFlat[i+2] = n.z
+      }, true)
+      
+      const vd = new BABYLON.VertexData()
+      vd.positions = positionsFlat
+      vd.normals = normalsFlat
+      vd.uvs = []
+      vd.indices = []
+      vd.applyToMesh(this.visualization)
+    }
+
+    this.visualization.material = material
   }
 
-  iterateVertices(cb : (v : BABYLON.Vector3) => void, doLastRow = true) {
+  iterateVertices(cb : (v : BABYLON.Vector3, i? : number) => void, doLastRow = true) {
     const res = this.resolution
     const min = this.min
-    this.iterateIndices((x, y, z) => {
+    this.iterateIndices((x, y, z, i) => {
       const vertex = res.multiplyByFloats(x, y, z).add(min)
-      cb(vertex)
+      cb(vertex, i)
     }, doLastRow)
   }
 
-  iterateIndices(cb : (x : number, y : number, z : number) => void, doLastRow = true) {
+  iterateIndices(cb : (x : number, y : number, z : number, i? : number) => void, doLastRow = true) {
     const o = doLastRow ? 1 : 0
     const N = this.gridOptions.subdivisions + o
     for (let x = 0; x < N; x++) {
       for (let y = 0; y < N; y++) {
         for (let z = 0; z < N; z++) {
-          cb(x, y, z)
+          cb(x, y, z, x*N*N + y*N + z)
         }
       }
     }
