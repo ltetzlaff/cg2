@@ -22,7 +22,7 @@ export class Surface implements IVisualizable {
     const { resolution } = grid
 
     const queryDelegate = (v2: BABYLON.Vector2) => {
-      return tree.query(v2, findingPattern, { k, radius })
+      return tree.query(v2, findingPattern, { k, radius }) as BABYLON.Vector3[]
     }
 
     const defaultNormal = new BABYLON.Vector3(1, 1, 1)

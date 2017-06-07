@@ -149,10 +149,10 @@ export class Octree extends Octant implements Tree, IVisualizable {
     })
     //console.timeEnd("  - finding Start")
     if (!startingPoint) return [] // no direct box hit
-    return this.query(startingPoint, pattern, options)
+    return this.query(startingPoint, pattern, options) as BABYLON.Vector3[]
   }
 
-  query(startingPoint : BABYLON.Vector3 | BABYLON.Vector2, pattern : TreesUtils.FindingPattern, options : any) : BABYLON.Vector3[] {
+  query(startingPoint : BABYLON.Vector3 | BABYLON.Vector2, pattern : TreesUtils.FindingPattern, options : any) : BABYLON.Vector3[] | number[] {
     if (!(options.radius === 0 || options.radius > 0)) {
       options.radius = Number.MAX_VALUE // knearest just needs a point
     }
@@ -169,23 +169,29 @@ export class Octree extends Octant implements Tree, IVisualizable {
     intersectedOctants = this.findIntersecting(volume)
 
     //console.time("  - finding Query")
-    let candidates : BABYLON.Vector3[] = []
+    let candidates : { p: BABYLON.Vector3, i: number}[] = []
     switch (pattern) {
       case TreesUtils.FindingPattern.KNearest:
         intersectedOctants.forEach(octant => {
-          candidates.push(...octant.points)
-          candidates = candidates
-            .sort((a, b) => volume.distanceToCenter(a) - volume.distanceToCenter(b))
-            .slice(0, options.k)
+          candidates.push(...octant.points.map((p, i) => ({ p, i })))            
         })
+        candidates = candidates
+          .sort((a, b) => volume.distanceToCenter(a.p) - volume.distanceToCenter(b.p))
+          .slice(0, options.k)
         break
       case TreesUtils.FindingPattern.Radius:
         intersectedOctants.forEach(octant => {
-          candidates.push(...octant.points.filter(p => volume.contains(p)))
+          octant.points.forEach((p, i) => {
+            if (volume.contains(p)) candidates.push({ p, i })
+          })
         })
         break
     }
     //console.timeEnd("  - finding Query")
-    return candidates
+    if (options.justIndices) {
+      return candidates.map(c => c.i)
+    } else {
+      return candidates.map(c => c.p)
+    }
   }
 }
