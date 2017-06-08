@@ -1,4 +1,6 @@
 import { Vector3 } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
+import * as math from "mathjs"
+
 
 enum Degree {
   Constant, Linear, Quadratic

@@ -1,11 +1,11 @@
-import * as BABYLON from "../../node_modules/babylonjs/dist/preview release/babylon.module"
+import { Vector3, Vector2, Ray } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 import { TreesUtils } from "./TreesUtils"
 
 export interface Tree {
   children : any[]
-  points : BABYLON.Vector3[]
+  points : Vector3[]
 
-  pick(ray : BABYLON.Ray, pattern : TreesUtils.FindingPattern, options : any) : BABYLON.Vector3[]
+  pick(ray : Ray, pattern : TreesUtils.FindingPattern, options : any) : Vector3[]
 
-  query(startingPoint : BABYLON.Vector3 | BABYLON.Vector2, pattern : TreesUtils.FindingPattern, options : any) : BABYLON.Vector3[] | number[]
+  query(startingPoint : Vector3 | Vector2, pattern : TreesUtils.FindingPattern, options : any) : Vector3[] | number[]
 }

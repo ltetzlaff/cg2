@@ -1,10 +1,10 @@
-import * as BABYLON from "../../node_modules/babylonjs/dist/preview release/babylon.module"
+import { Vector3, Vector2 } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 import * as math from "mathjs"
 import { Tree } from "../Trees/Tree"
 import { TreesUtils } from "../Trees/TreesUtils"
 import { PolynomialBasis } from "./PolynomialBasis"
 
-export function solveDeCasteljau(interpolatePoints : BABYLON.Vector3[], controlPoints : BABYLON.Vector3[], subdivisions : number) {
+export function solveDeCasteljau(interpolatePoints : Vector3[], controlPoints : Vector3[], subdivisions : number) {
   const f = (n : number) => math.factorial(n) as number
   const binomial = (n : number, k : number) => f(n)/(f(k) * f(n - k))
   const b = (n : number, i : number, u : number) => {
@@ -14,8 +14,8 @@ export function solveDeCasteljau(interpolatePoints : BABYLON.Vector3[], controlP
     return binomial(n, i) * Math.pow(u, i) * Math.pow(1 - u, n - i)
   }
   
-  const points : BABYLON.Vector3[] = []
-  const normals : BABYLON.Vector3[] = []
+  const points : Vector3[] = []
+  const normals : Vector3[] = []
   interpolatePoints.forEach(point => {
     const { x : u, z : v } = point
     let y = 0
@@ -38,27 +38,27 @@ export function solveDeCasteljau(interpolatePoints : BABYLON.Vector3[], controlP
     const yt1 = 0
     const yt2 = 0
     
-    const t1 = new BABYLON.Vector3(0, yt1, 1)
-    const t2 = new BABYLON.Vector3(1, yt2, 0)
-    const normal = BABYLON.Vector3.Cross(t1, t2)
+    const t1 = new Vector3(0, yt1, 1)
+    const t2 = new Vector3(1, yt2, 0)
+    const normal = Vector3.Cross(t1, t2)
     normals.push(normal)
   })    
   return { points, normals }
 }
 
-export function wendland(a : BABYLON.Vector3, b : BABYLON.Vector3, radius : number) {
-  const dist = BABYLON.Vector3.DistanceSquared(a, b)
+export function wendland(a : Vector3, b : Vector3, radius : number) {
+  const dist = Vector3.Distance(a, b)
   const dh = dist / radius
   return Math.pow(1 - dh, 4) * (4 * dh + 1)
 }
 
 export function calculateMLSPoint(
-  gridPoint : BABYLON.Vector3,
+  gridPoint : Vector3,
   wendlandRadius : number,
   radius : number,
   tree : Tree,
   basis : PolynomialBasis,
-  arrays : BABYLON.Vector3[][],
+  arrays : Vector3[][],
   epsilon : number) {
   const { x, y, z } = gridPoint
   
@@ -98,9 +98,9 @@ export function calculateMLSPoint(
   return f
 }
 
-export function calculateWLSPoint(gridPoint : BABYLON.Vector3, wendlandRadius : number, queryDelegate : (v2: BABYLON.Vector2) => BABYLON.Vector3[]) {
+export function calculateWLSPoint(gridPoint : Vector3, wendlandRadius : number, queryDelegate : (v2: Vector2) => Vector3[]) {
   const {x, z} = gridPoint
-  const nearbyPoints = queryDelegate(new BABYLON.Vector2(x, z))
+  const nearbyPoints = queryDelegate(new Vector2(x, z))
   if (nearbyPoints.length <= 1) return null
   
   const dims = 6
@@ -121,13 +121,13 @@ export function calculateWLSPoint(gridPoint : BABYLON.Vector3, wendlandRadius : 
   // Calculate Normal based on perpendicular tangents
   // tangent'y is coeffs derived by u or v
   const c = (i : number) => (coeffs as mathjs.Matrix).get([i])
-  const t1 = new BABYLON.Vector3(1, c(1) + 2 * c(3) * x + c(4) * z, 0)
-  const t2 = new BABYLON.Vector3(0, c(2) + 2 * c(5) * z + c(4) * x , 1)
-  const normal = BABYLON.Vector3.Cross(t1, t2)
+  const t1 = new Vector3(1, c(1) + 2 * c(3) * x + c(4) * z, 0)
+  const t2 = new Vector3(0, c(2) + 2 * c(5) * z + c(4) * x , 1)
+  const normal = Vector3.Cross(t1, t2)
     .normalize()
     .scaleInPlace(-1)
 
-  return { point : new BABYLON.Vector3(x, y, z) , normal }
+  return { point : new Vector3(x, y, z) , normal }
 }
 
 function Vector(u : number, v : number) {

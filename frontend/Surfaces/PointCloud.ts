@@ -1,22 +1,22 @@
-import * as BABYLON from "../../node_modules/babylonjs/dist/preview release/babylon.module"
+import { Vector3, Mesh, Color3, Scene, Material, IndicesArray, VertexData } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 import { IVisualizable, showVertexNormals, getVertexData } from "../Utils"
 import { Grid3D } from "./Grid3D"
 import { Octree, OctreeOptions } from "../Trees/Octree"
 
 export class PointCloud implements IVisualizable {
-  public visualization : BABYLON.Mesh
-  public normalVisualization : BABYLON.Mesh
-  public vertices : BABYLON.Vector3[]
-  public normals : BABYLON.Vector3[]
+  public visualization : Mesh
+  public normalVisualization : Mesh
+  public vertices : Vector3[]
+  public normals : Vector3[]
   public name : string
 
   public tree : Octree
 
-  constructor(data : BABYLON.Mesh | BABYLON.Vector3[], name? : string, scale = 1) {
+  constructor(data : Mesh | Vector3[], name? : string, scale = 1) {
     this.name = name || "PointCloud"
     this.normals = []
 
-    if (data instanceof BABYLON.Mesh) {
+    if (data instanceof Mesh) {
       const { positions, normals } = getVertexData(data)
       this.vertices = positions
       this.normals = normals
@@ -33,7 +33,7 @@ export class PointCloud implements IVisualizable {
     this.tree = new Octree(this.vertices, opts)
   }
 
-  public visualizeNormals(show : boolean, color : BABYLON.Color3, scene : BABYLON.Scene) {
+  public visualizeNormals(show : boolean, color : Color3, scene : Scene) {
     if (this.normalVisualization) this.normalVisualization.dispose()
     if (!show) return
     
@@ -42,7 +42,7 @@ export class PointCloud implements IVisualizable {
     this.normalVisualization = ls
   }
 
-  public visualize(show : boolean, material : BABYLON.Material, scene : BABYLON.Scene) {
+  public visualize(show : boolean, material : Material, scene : Scene) {
     if (this.visualization) this.visualization.isVisible = show
 
     if (!show) {
@@ -50,11 +50,11 @@ export class PointCloud implements IVisualizable {
     }
 
     if (!this.visualization) {
-      this.visualization = new BABYLON.Mesh("surfaceVisualization", scene)
+      this.visualization = new Mesh("surfaceVisualization", scene)
       
       const vertices = this.vertices
       const normals = this.normals
-      const unitVector = new BABYLON.Vector3(1, 1, 1)
+      const unitVector = new Vector3(1, 1, 1)
 
       const positionsFlat : number[] = []
       const normalsFlat : number[] = []
@@ -69,7 +69,7 @@ export class PointCloud implements IVisualizable {
         normalsFlat[i+1] = n.y
         normalsFlat[i+2] = n.z
       }
-      const vd = new BABYLON.VertexData()
+      const vd = new VertexData()
       vd.positions = positionsFlat
       vd.normals = normalsFlat
       vd.uvs = []
@@ -84,9 +84,9 @@ export class PointCloud implements IVisualizable {
     this.visualization.dispose()
   }
 
-  public toTriangleMesh(Grid3D : Grid3D, mesh : BABYLON.Mesh) : BABYLON.Mesh {
+  public toTriangleMesh(Grid3D : Grid3D, mesh : Mesh) : Mesh {
     // Indices
-    const indices : BABYLON.IndicesArray = []
+    const indices : IndicesArray = []
     
     const { subdivisions } = Grid3D.gridOptions
     
@@ -125,7 +125,7 @@ export class PointCloud implements IVisualizable {
     }
 
     // Merge
-    const vertexData = new BABYLON.VertexData()
+    const vertexData = new VertexData()
     vertexData.positions = positionsFlat
     vertexData.indices = indices
     vertexData.normals = normalsFlat

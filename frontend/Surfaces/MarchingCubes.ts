@@ -1,13 +1,13 @@
-import * as BABYLON from "../../node_modules/babylonjs/dist/preview release/babylon.module"
+import { Vector3, Mesh, Color3, Scene, Material } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 import { IVisualizable, showMeshsVertexNormals } from "../Utils"
 
 export enum MCAlgo {
   MarchingCubes, EnhancedMarchingCubes
 }
 
-export class MCMesh extends BABYLON.Mesh implements IVisualizable {
-  public visualization : BABYLON.Mesh
-  public normalVisualization : BABYLON.Mesh
+export class MCMesh extends Mesh implements IVisualizable {
+  public visualization : Mesh
+  public normalVisualization : Mesh
   
   public destroy() {
     if (this.normalVisualization) this.normalVisualization.dispose()
@@ -15,7 +15,7 @@ export class MCMesh extends BABYLON.Mesh implements IVisualizable {
     this.dispose()
   }
 
-  visualizeNormals(show : boolean, color : BABYLON.Color3, scene? : BABYLON.Scene) {
+  visualizeNormals(show : boolean, color : Color3, scene? : Scene) {
     if (this.normalVisualization) this.normalVisualization.dispose()
     if (!show) return
 
@@ -24,7 +24,7 @@ export class MCMesh extends BABYLON.Mesh implements IVisualizable {
     this.normalVisualization = ls
   }
 
-  public visualize(show : boolean, material : BABYLON.Material, scene? : BABYLON.Scene) {
+  public visualize(show : boolean, material : Material, scene? : Scene) {
     this.isVisible = show
     if (!show) return
 

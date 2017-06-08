@@ -1,8 +1,7 @@
-import { Engine } from "./engine"
+import { App } from "./engine"
 
-var e : Engine
 window.addEventListener("DOMContentLoaded", () => {
-  e = new Engine(document.querySelector("#c") as HTMLCanvasElement)
+  const e = new App(document.querySelector("#c") as HTMLCanvasElement)
   e.setupUIBindings()
   e.run()  
 })

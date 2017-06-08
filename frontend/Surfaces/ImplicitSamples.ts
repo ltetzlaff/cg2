@@ -1,4 +1,4 @@
-import * as BABYLON from "../../node_modules/babylonjs/dist/preview release/babylon.module"
+import { Vector3, Color3, Color4, Mesh, Scene, Material, VertexBuffer } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 import { IVisualizable } from "../Utils"
 import { PointCloud } from "./PointCloud"
 import { Grid3D } from "./Grid3D"
@@ -7,30 +7,29 @@ import { calculateMLSPoint } from "./SurfaceUtils"
 import { PolynomialBasis } from "./PolynomialBasis"
 
 export class ImplicitSamples implements IVisualizable {
-  public visualization : BABYLON.Mesh = null
+  public visualization : Mesh = null
 
   private epsilon : number
   private inner : PointCloud
   private source : PointCloud
   private outer : PointCloud
-  private samples : { position : BABYLON.Vector3, color : BABYLON.Color4 }[]
+  private samples : { position : Vector3, color : Color4 }[]
 
   constructor(source : PointCloud, grid : Grid3D) {
-    const isNearest = (p : BABYLON.Vector3, p2 : BABYLON.Vector3) => {
-      const picked = source.tree.query(p2, TreesUtils.FindingPattern.KNearest, { k : 1 }) as BABYLON.Vector3[]
+    const isNearest = (p : Vector3, p2 : Vector3) => {
+      const picked = source.tree.query(p2, TreesUtils.FindingPattern.KNearest, { k : 1 }) as Vector3[]
       return picked.length === 1 && picked[0].equals(p) 
     }
 
     this.source = source
 
     const { vertices, normals } = source
-    const innerPoints : BABYLON.Vector3[] = []
-    const outerPoints : BABYLON.Vector3[] = []
+    const innerPoints : Vector3[] = []
+    const outerPoints : Vector3[] = []
     
-    let epsilon = BABYLON.Vector3.Distance(grid.min, grid.max) * .01 * 2
+    let epsilon = Vector3.Distance(grid.min, grid.max) * .01 * 2
     vertices.forEach((p, i) => {
       let epsilonTooHigh = false
-
       // outward point p_i + n_i
       let pOut
       do {
@@ -72,7 +71,7 @@ export class ImplicitSamples implements IVisualizable {
         this.epsilon
       )
 
-      const color = new BABYLON.Color4(0, 0, 0, 1)
+      const color = new Color4(0, 0, 0, 1)
       if (implicitValue <= -this.epsilon) {
         color.r = implicitValue
       } else if (implicitValue >= this.epsilon) {
@@ -88,16 +87,16 @@ export class ImplicitSamples implements IVisualizable {
       console.log(implicitValue.toFixed(4), this.epsilon.toFixed(4))
     })
     
-    grid.visualization.setVerticesData(BABYLON.VertexBuffer.ColorKind, vertexColors)
+    grid.visualization.setVerticesData(VertexBuffer.ColorKind, vertexColors)
     grid.visualization.useVertexColors = true
   }
 
-  public visualizeNormals(show : boolean, color : BABYLON.Color3, scene : BABYLON.Scene) {
+  public visualizeNormals(show : boolean, color : Color3, scene : Scene) {
     if (this.inner) this.inner.visualizeNormals(show, color, scene)
     if (this.outer) this.outer.visualizeNormals(show, color, scene)
   }
 
-  public visualize(show : boolean, material : BABYLON.Material, scene? : BABYLON.Scene) {
+  public visualize(show : boolean, material : Material, scene? : Scene) {
     if (this.inner) this.inner.visualize(show, material, scene)
     if (this.outer) this.outer.visualize(show, material, scene)
   }

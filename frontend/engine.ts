@@ -1,4 +1,9 @@
-import * as BABYLON from "../node_modules/babylonjs/dist/preview release/babylon.module"
+import { 
+  Vector3, Color3, Mesh, AbstractMesh, 
+  ArcRotateCamera, PointLight, Light, Scene, 
+  Material, StandardMaterial,
+  Engine, AssetsManager, SceneLoader
+} from "../node_modules/babylonjs/dist/preview release/babylon.module"
 import { TreesUtils } from "./Trees/TreesUtils"
 import { Tree } from "./Trees/Tree"
 import { getExtents } from "./Utils"
@@ -10,14 +15,14 @@ import { ImplicitSamples } from "./Surfaces/ImplicitSamples"
 import { MCMesh, MCAlgo } from "./Surfaces/MarchingCubes"
 import "./OFFFileLoader"
 
-export class Engine {
+export class App {
   private canvas : HTMLCanvasElement
-  private engine: BABYLON.Engine
-  public scene : BABYLON.Scene
-  private loader : BABYLON.AssetsManager
-  private light: BABYLON.Light
-  private lightPivot : BABYLON.Mesh
-  private cam : BABYLON.ArcRotateCamera
+  private engine: Engine
+  public scene : Scene
+  private loader : AssetsManager
+  private light: Light
+  private lightPivot : Mesh
+  private cam : ArcRotateCamera
 
   private pointCloud : PointCloud
   private mat : any  
@@ -29,22 +34,22 @@ export class Engine {
 
   constructor(canvas : HTMLCanvasElement) {
     this.canvas = canvas
-    this.engine = new BABYLON.Engine(canvas as any, true)
+    this.engine = new Engine(canvas as any, true)
     this.engine.enableOfflineSupport = null
 
     // Setup Scene
-    const s = new BABYLON.Scene(this.engine)
+    const s = new Scene(this.engine)
     this.scene = s
-    this.loader = new BABYLON.AssetsManager(s)
-    this.cam = new BABYLON.ArcRotateCamera("Main Cam", -15.97, 1.22, 28.6, BABYLON.Vector3.Zero(), s)
+    this.loader = new AssetsManager(s)
+    this.cam = new ArcRotateCamera("Main Cam", -15.97, 1.22, 28.6, Vector3.Zero(), s)
     this.cam.upperRadiusLimit = 50
     this.cam.lowerRadiusLimit = 10
     this.cam.wheelPrecision = 10
     this.cam.attachControl(this.canvas, false)
-    //new BABYLON.HemisphericLight("sun", new BABYLON.Vector3(0, 1, 0), s)
-    this.light = new BABYLON.PointLight("light", new BABYLON.Vector3(0, 2.5, 10), s)
-    this.lightPivot = new BABYLON.Mesh("lightPivot", s)
-    this.lightPivot.setAbsolutePosition(new BABYLON.Vector3(0, 0, 10))
+    //new HemisphericLight("sun", new Vector3(0, 1, 0), s)
+    this.light = new PointLight("light", new Vector3(0, 2.5, 10), s)
+    this.lightPivot = new Mesh("lightPivot", s)
+    this.lightPivot.setAbsolutePosition(new Vector3(0, 0, 10))
     this.light.parent = this.lightPivot
 
     this.mat = {
@@ -52,7 +57,7 @@ export class Engine {
       tree: new WireFrameMaterial("yellow", s),
       grid: new PointCloudMaterial("white", s),
       implicitSamples: new PointCloudMaterial("green", s),
-      mcMesh: new Material("purple", s)
+      mcMesh: new StdMaterial("purple", s)
     }
     
     this.gridOptions = new GridOptions()
@@ -181,8 +186,8 @@ export class Engine {
       lastX = ev.offsetX
       lastY = ev.offsetY
       if (ev.ctrlKey) {
-        if (lastX !== 0) this.lightPivot.rotate(new BABYLON.Vector3(0, 0, 1), -dx)
-        if (lastY !== 0) this.lightPivot.rotate(new BABYLON.Vector3(0, 1, 0), -dy)
+        if (lastX !== 0) this.lightPivot.rotate(new Vector3(0, 0, 1), -dx)
+        if (lastY !== 0) this.lightPivot.rotate(new Vector3(0, 1, 0), -dy)
       }
     })
   }
@@ -228,14 +233,14 @@ export class Engine {
   }
 
   load(file : string, asPointCloud : boolean = false) : void {
-    BABYLON.SceneLoader.ImportMesh(file, "/models/", file, this.scene, (meshes : BABYLON.AbstractMesh[]) => {
+    SceneLoader.ImportMesh(file, "/models/", file, this.scene, (meshes : AbstractMesh[]) => {
       // Remove old meshes
       //this.scene.meshes.forEach(m => m.dispose())
       if (this.scene.meshes.length) this.scene.meshes = []
 
       if (asPointCloud) {
         const scale = file === "cat.off" ? .01 : 1
-        this.pointCloud = new PointCloud(meshes[0] as BABYLON.Mesh, file, scale)
+        this.pointCloud = new PointCloud(meshes[0] as Mesh, file, scale)
         this.pointCloud.visualize(getCheckbox($("#pVisualizePointCloud")), this.mat.points, this.scene)
         this.pointCloud.visualizeNormals(getCheckbox($("#pVisualizeVertexNormals")), getColor("white"), this.scene)
         this.buildGrid()
@@ -251,18 +256,18 @@ function capitalize(str : string) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 function getColor(str : string) {
-  return BABYLON.Color3[capitalize(str)]()
+  return Color3[capitalize(str)]()
 }
 
-class Material extends BABYLON.StandardMaterial {
-  constructor(color : string, scene : BABYLON.Scene) {
+class StdMaterial extends StandardMaterial {
+  constructor(color : string, scene : Scene) {
     super("mat", scene)
     this.diffuseColor = getColor(color)
   }
 }
 
-class PointCloudMaterial extends BABYLON.StandardMaterial {
-  constructor(color : string, scene : BABYLON.Scene, unlit = false) {
+class PointCloudMaterial extends StandardMaterial {
+  constructor(color : string, scene : Scene, unlit = false) {
     super("pointCloud", scene)
     this.diffuseColor = getColor(color)
     this.pointsCloud = true
@@ -271,8 +276,8 @@ class PointCloudMaterial extends BABYLON.StandardMaterial {
   }
 }
 
-class WireFrameMaterial extends BABYLON.StandardMaterial {
-  constructor(color : string, scene : BABYLON.Scene) {
+class WireFrameMaterial extends StandardMaterial {
+  constructor(color : string, scene : Scene) {
     super("wireframe", scene)
     this.diffuseColor = getColor(color)
 	  this.wireframe = true

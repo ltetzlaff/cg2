@@ -1,14 +1,14 @@
-import * as BABYLON from "../../node_modules/babylonjs/dist/preview release/babylon.module"
+import { Vector3, Mesh, Color3, Scene, Material, VertexBuffer } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 import { IVisualizable, showMeshsVertexNormals } from "../Utils"
 
-export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
-  public visualization : BABYLON.Mesh
-  public normalVisualization: BABYLON.Mesh
+export class SurfaceMesh extends Mesh implements IVisualizable {
+  public visualization : Mesh
+  public normalVisualization: Mesh
   public fakeNormals : boolean // #DEBUG
 
   public flatten() {
-    // Partly adapted from BABYLON.Mesh.convertToFlatShadedMesh 
-    const vbs : BABYLON.VertexBuffer[] = []
+    // Partly adapted from Mesh.convertToFlatShadedMesh 
+    const vbs : VertexBuffer[] = []
     const data : any[] = []
     const newData : any[] = []
 
@@ -42,14 +42,14 @@ export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
 
     // Calculate Surface Normals
     const normals : number[] = []
-    const oldNormals = newData[BABYLON.VertexBuffer.NormalKind]
+    const oldNormals = newData[VertexBuffer.NormalKind]
     
     for (let i = 0; i < totalIndices; i++) {
       indices[i]      = i
     }
 
     for (let i = 0; i < totalIndices; i += 6) {
-      const sn = new BABYLON.Vector3(0, 0, 0)
+      const sn = new Vector3(0, 0, 0)
       for (let j = 0; j < 6; j++) {
         const face = (i + j) * 3
         sn.x += oldNormals[face]
@@ -65,14 +65,14 @@ export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
       }
     }
 
-    this.setVerticesData(BABYLON.VertexBuffer.NormalKind, normals, false)
+    this.setVerticesData(VertexBuffer.NormalKind, normals, false)
 
     this.setIndices(indices)
 
     // Updating vertex buffers
     for (let k = 0; k < kinds.length; k++) {
       const kind = kinds[k]
-      if (kind === BABYLON.VertexBuffer.NormalKind) continue
+      if (kind === VertexBuffer.NormalKind) continue
 
       this.setVerticesData(kind, newData[kind], false)
     }
@@ -84,7 +84,7 @@ export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
     this.dispose()
   }
 
-  visualizeNormals(show : boolean, color : BABYLON.Color3, scene? : BABYLON.Scene) {
+  visualizeNormals(show : boolean, color : Color3, scene? : Scene) {
     if (this.normalVisualization) this.normalVisualization.dispose()
     if (!show) return
 
@@ -93,7 +93,7 @@ export class SurfaceMesh extends BABYLON.Mesh implements IVisualizable {
     this.normalVisualization = ls
   }
 
-  public visualize(show : boolean, material : BABYLON.Material, _scene?: BABYLON.Scene) {
+  public visualize(show : boolean, material : Material, _scene?: Scene) {
     this.isVisible = show
     if (!show) return
 

@@ -1,4 +1,4 @@
-import * as BABYLON from "../../node_modules/babylonjs/dist/preview release/babylon.module"
+import { Vector3, Mesh, Material, Scene, VertexData, VertexBuffer } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 import { TreesUtils } from "../Trees/TreesUtils"
 import { IVisualizable } from "../Utils"
 import { PointCloud } from "./PointCloud"
@@ -22,14 +22,14 @@ export class GridOptions {
 }
 
 export class Grid3D implements IVisualizable {
-  public visualization : BABYLON.Mesh
+  public visualization : Mesh
 
   public gridOptions : GridOptions
-  public min : BABYLON.Vector3
-  public max : BABYLON.Vector3
-  public resolution : BABYLON.Vector3
+  public min : Vector3
+  public max : Vector3
+  public resolution : Vector3
 
-  constructor(min : BABYLON.Vector3, max : BABYLON.Vector3, gridOptions : GridOptions) {
+  constructor(min : Vector3, max : Vector3, gridOptions : GridOptions) {
     this.gridOptions = gridOptions
 
     const diff = max.subtract(min)
@@ -41,7 +41,7 @@ export class Grid3D implements IVisualizable {
       .scale(1/gridOptions.subdivisions)
   }
 
-  visualize(show : boolean, material : BABYLON.Material, scene: BABYLON.Scene) {
+  visualize(show : boolean, material : Material, scene: Scene) {
     if (this.visualization) this.visualization.isVisible = show
 
     if (!show) {
@@ -49,9 +49,9 @@ export class Grid3D implements IVisualizable {
     }
 
     if (!this.visualization) {
-      this.visualization = new BABYLON.Mesh("surfaceVisualization", scene)
+      this.visualization = new Mesh("surfaceVisualization", scene)
       
-      const unitVector = new BABYLON.Vector3(1, 1, 1)
+      const unitVector = new Vector3(1, 1, 1)
       const positionsFlat : number[] = []
       const normalsFlat : number[] = []
       
@@ -66,18 +66,17 @@ export class Grid3D implements IVisualizable {
         normalsFlat[i+2] = n.z
       }, true)
       
-      const vd = new BABYLON.VertexData()
+      const vd = new VertexData()
       vd.positions = positionsFlat
       vd.normals = normalsFlat
       vd.uvs = []
       vd.indices = []
       vd.applyToMesh(this.visualization)
+      this.visualization.material = material
     }
-
-    this.visualization.material = material
   }
 
-  iterateVertices(cb : (v : BABYLON.Vector3, i? : number) => void, doLastRow = true) {
+  iterateVertices(cb : (v : Vector3, i? : number) => void, doLastRow = true) {
     const res = this.resolution
     const min = this.min
     this.iterateIndices((x, y, z, i) => {

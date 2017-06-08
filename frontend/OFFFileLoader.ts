@@ -1,10 +1,10 @@
-import * as BABYLON from "../node_modules/babylonjs/dist/preview release/babylon.module"
+import { Vector3, Scene, SceneLoader, ISceneLoaderPlugin, Mesh, AbstractMesh, VertexData, Skeleton, ParticleSystem } from "../node_modules/babylonjs/dist/preview release/babylon.module"
 
 //module BABYLON {
-export class OFFFileLoader implements BABYLON.ISceneLoaderPlugin {
+export class OFFFileLoader implements ISceneLoaderPlugin {
   public extensions : string = ".off"
 
-  public importMesh(meshesNames: any, scene: BABYLON.Scene, data: any, rootUrl: string, meshes: BABYLON.AbstractMesh[], particleSystems: BABYLON.ParticleSystem[], skeletons: BABYLON.Skeleton[]): boolean {
+  public importMesh(meshesNames: any, scene: Scene, data: any, rootUrl: string, meshes: AbstractMesh[], particleSystems: ParticleSystem[], skeletons: Skeleton[]): boolean {
     const parsedMesh = this.parseOFF(meshesNames, scene, data)
     if (meshes) {
       meshes.push(parsedMesh)
@@ -12,11 +12,11 @@ export class OFFFileLoader implements BABYLON.ISceneLoaderPlugin {
     return true
   }
 
-  public load(scene: BABYLON.Scene, data: string, rootUrl: string): boolean {
+  public load(scene: Scene, data: string, rootUrl: string): boolean {
     return this.importMesh(null, scene, data, rootUrl, null, null, null);
   }
 
-  private parseOFF (meshName : string, scene : BABYLON.Scene, data : string) : BABYLON.AbstractMesh {
+  private parseOFF (meshName : string, scene : Scene, data : string) : AbstractMesh {
     const lines : string[] = data.split("\n")
 
     lines.shift() // header line
@@ -45,16 +45,16 @@ export class OFFFileLoader implements BABYLON.ISceneLoaderPlugin {
       }
     })
 
-    const vertexData = new BABYLON.VertexData()
+    const vertexData = new VertexData()
     vertexData.positions = positionsFlat
     vertexData.indices = faces
     vertexData.uvs = []
     vertexData.normals = normalsFlat
-    const parsedMesh = new BABYLON.Mesh(meshName, scene)
+    const parsedMesh = new Mesh(meshName, scene)
     vertexData.applyToMesh(parsedMesh)
     console.log("loading complete")
     return parsedMesh
   }
 }
 
-BABYLON.SceneLoader.RegisterPlugin(new OFFFileLoader())
+SceneLoader.RegisterPlugin(new OFFFileLoader())
