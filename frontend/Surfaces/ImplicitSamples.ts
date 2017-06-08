@@ -1,45 +1,111 @@
-import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
+import * as BABYLON from "../../node_modules/babylonjs/dist/preview release/babylon.module"
+import { IVisualizable } from "../Utils"
 import { PointCloud } from "./PointCloud"
 import { Grid3D } from "./Grid3D"
 import { TreesUtils } from "../Trees/TreesUtils"
+import { calculateMLSPoint } from "./SurfaceUtils"
+import { PolynomialBasis } from "./PolynomialBasis"
 
-export class ImplicitSamples extends PointCloud {
+export class ImplicitSamples implements IVisualizable {
+  public visualization : BABYLON.Mesh = null
+
+  private epsilon : number
+  private inner : PointCloud
+  private source : PointCloud
+  private outer : PointCloud
+  private samples : { position : BABYLON.Vector3, color : BABYLON.Color4 }[]
+
   constructor(source : PointCloud, grid : Grid3D) {
     const isNearest = (p : BABYLON.Vector3, p2 : BABYLON.Vector3) => {
-      const picked = source.tree.query(p2, TreesUtils.FindingPattern.KNearest, { k : 1 })
+      const picked = source.tree.query(p2, TreesUtils.FindingPattern.KNearest, { k : 1 }) as BABYLON.Vector3[]
       return picked.length === 1 && picked[0].equals(p) 
     }
 
-    const vertices = source.vertices
-    const normals = source.normals    
-    const points : BABYLON.Vector3[] = []
-    let epsilon0 = BABYLON.Vector3.Distance(grid.min, grid.max) * .01 * 2
-    console.log(epsilon0)
-    vertices.forEach((p, i) => {
-      // original point p_i
-      points.push(p)
+    this.source = source
 
-      let epsilon = epsilon0
+    const { vertices, normals } = source
+    const innerPoints : BABYLON.Vector3[] = []
+    const outerPoints : BABYLON.Vector3[] = []
+    
+    let epsilon = BABYLON.Vector3.Distance(grid.min, grid.max) * .01 * 2
+    vertices.forEach((p, i) => {
+      let epsilonTooHigh = false
 
       // outward point p_i + n_i
       let pOut
       do {
-        epsilon *= .5
         pOut = p.add(normals[i].scale(epsilon))
-      } while (!isNearest(p, pOut))
-      points.push(pOut)
-
-      epsilon = epsilon0
+        epsilonTooHigh = !isNearest(p, pOut)
+        if (epsilonTooHigh) epsilon *= .5        
+      } while (epsilonTooHigh)
+      outerPoints.push(pOut)
 
       // inward point p_i + n_i
       let pIn
       do {
-        epsilon *= .5
         pIn = p.subtract(normals[i].scale(epsilon))
-      } while (!isNearest(p, pIn))
-      points.push(pIn)
+        epsilonTooHigh = !isNearest(p, pIn)        
+        if (epsilonTooHigh) epsilon *= .5
+      } while (epsilonTooHigh)
+      innerPoints.push(pIn)
     })
     
-    super(points, "Implicit Surface")
+    this.epsilon = epsilon
+    this.inner = new PointCloud(innerPoints)
+    this.outer = new PointCloud(outerPoints)
+    this.samples = []
+  }
+
+  sample(grid : Grid3D) : void {
+    console.log("sampling")
+    const { wendlandRadius, radius } = grid.gridOptions
+
+    const vertexColors : number[] = []
+    grid.iterateVertices((position, i) => {
+      const implicitValue = calculateMLSPoint(
+        position, 
+        wendlandRadius,
+        radius,
+        this.source.tree, 
+        PolynomialBasis.Constant(), 
+        [this.inner.vertices, this.source.vertices, this.outer.vertices],
+        this.epsilon
+      )
+
+      const color = new BABYLON.Color4(0, 0, 0, 1)
+      if (implicitValue <= -this.epsilon) {
+        color.r = implicitValue
+      } else if (implicitValue >= this.epsilon) {
+        color.b = implicitValue
+      }
+      /* #DEBUG
+      color.r = 1
+      color.g = .2
+      color.b = .5
+      */
+      color.toArray(vertexColors, i*4)
+      this.samples.push({ position, color })
+      console.log(implicitValue.toFixed(4), this.epsilon.toFixed(4))
+    })
+    
+    grid.visualization.setVerticesData(BABYLON.VertexBuffer.ColorKind, vertexColors)
+    grid.visualization.useVertexColors = true
+  }
+
+  public visualizeNormals(show : boolean, color : BABYLON.Color3, scene : BABYLON.Scene) {
+    if (this.inner) this.inner.visualizeNormals(show, color, scene)
+    if (this.outer) this.outer.visualizeNormals(show, color, scene)
+  }
+
+  public visualize(show : boolean, material : BABYLON.Material, scene? : BABYLON.Scene) {
+    if (this.inner) this.inner.visualize(show, material, scene)
+    if (this.outer) this.outer.visualize(show, material, scene)
+  }
+
+  public destroy() {
+    this.visualizeNormals(false, null, null)
+    this.visualize(false, null, null)
+    this.inner = null
+    this.outer = null
   }
 }
