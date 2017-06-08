@@ -1,4 +1,8 @@
-import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
+import * as BABYLON from "../../node_modules/babylonjs/dist/preview release/babylon.module"
+import * as math from "mathjs"
+import { Tree } from "../Trees/Tree"
+import { TreesUtils } from "../Trees/TreesUtils"
+import { PolynomialBasis } from "./PolynomialBasis"
 
 export function solveDeCasteljau(interpolatePoints : BABYLON.Vector3[], controlPoints : BABYLON.Vector3[], subdivisions : number) {
   const f = (n : number) => math.factorial(n) as number
@@ -46,6 +50,52 @@ export function wendland(a : BABYLON.Vector3, b : BABYLON.Vector3, radius : numb
   const dist = BABYLON.Vector3.DistanceSquared(a, b)
   const dh = dist / radius
   return Math.pow(1 - dh, 4) * (4 * dh + 1)
+}
+
+export function calculateMLSPoint(
+  gridPoint : BABYLON.Vector3,
+  wendlandRadius : number,
+  radius : number,
+  tree : Tree,
+  basis : PolynomialBasis,
+  arrays : BABYLON.Vector3[][],
+  epsilon : number) {
+  const { x, y, z } = gridPoint
+  
+  const options = { k: basis.length, radius, justIndices : true }
+  const query = (fp : TreesUtils.FindingPattern) => tree.query(gridPoint, fp, options) as number[]
+
+  let nearbyPoints : number[]
+  nearbyPoints = query(TreesUtils.FindingPattern.Radius)
+  if (nearbyPoints.length < basis.length) {
+    nearbyPoints = query(TreesUtils.FindingPattern.KNearest)
+  }
+  if (nearbyPoints.length < basis.length) {
+    throw new RangeError("KNearest Picking didnt return " + basis.length + ") points")
+  }  
+
+  const d = basis.length
+  let m = math.zeros(d, d)
+  let v = math.zeros(d)
+
+  const implicitFactors = [epsilon, 0, -epsilon]
+  for (let j = 0; j < arrays.length; j++) {
+    const points = arrays[j]
+    const implicitWeight = implicitFactors[j]
+
+    nearbyPoints.forEach(i => {
+      const p = points[i]
+      const weight = wendland(gridPoint, p, wendlandRadius)
+
+      // add weighted systemMatrix
+      m = math.add(m, math.multiply(basis.matrix(p), weight)) as number[][]
+      v = math.add(v, math.multiply(basis.vector(p), weight * implicitWeight)) as number[]
+    })
+  }
+
+  const coeffs = math.multiply(math.inv(m), v)
+  const f = math.dot(basis.vector(gridPoint), coeffs as number[])
+  return f
 }
 
 export function calculateWLSPoint(gridPoint : BABYLON.Vector3, wendlandRadius : number, queryDelegate : (v2: BABYLON.Vector2) => BABYLON.Vector3[]) {
