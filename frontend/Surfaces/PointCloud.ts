@@ -1,4 +1,4 @@
-import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
+import * as BABYLON from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 import { IVisualizable, showVertexNormals, getVertexData } from "../Utils"
 import { Grid3D } from "./Grid3D"
 import { Octree, OctreeOptions } from "../Trees/Octree"
@@ -17,16 +17,12 @@ export class PointCloud implements IVisualizable {
     this.normals = []
 
     if (data instanceof BABYLON.Mesh) {
-      this.visualization = data
-      
       const { positions, normals } = getVertexData(data)
       this.vertices = positions
       this.normals = normals
     } else {
       // Assert Vector3[]
       this.vertices = data
-
-      // make visualization later because it requires reference to scene
     }
 
     if (scale !== 1) {
@@ -46,7 +42,7 @@ export class PointCloud implements IVisualizable {
     this.normalVisualization = ls
   }
 
-  public visualize(show : boolean, material : BABYLON.Material, scene? : BABYLON.Scene) {
+  public visualize(show : boolean, material : BABYLON.Material, scene : BABYLON.Scene) {
     if (this.visualization) this.visualization.isVisible = show
 
     if (!show) {

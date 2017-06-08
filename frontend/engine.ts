@@ -1,4 +1,4 @@
-import * as BABYLON from "../node_modules/babylonjs/babylon.module"
+import * as BABYLON from "../node_modules/babylonjs/dist/preview release/babylon.module"
 import { TreesUtils } from "./Trees/TreesUtils"
 import { Tree } from "./Trees/Tree"
 import { getExtents } from "./Utils"
@@ -29,8 +29,8 @@ export class Engine {
 
   constructor(canvas : HTMLCanvasElement) {
     this.canvas = canvas
-    this.engine = new BABYLON.Engine(canvas, true)
-    this.engine.enableOfflineSupport = false
+    this.engine = new BABYLON.Engine(canvas as any, true)
+    this.engine.enableOfflineSupport = null
 
     // Setup Scene
     const s = new BABYLON.Scene(this.engine)
@@ -79,7 +79,7 @@ export class Engine {
     // Point Cloud
     sel = "#pVisualizePointCloud"
     bindOnChangeCheckbox(sel, b => {
-      if (this.pointCloud) this.pointCloud.visualize(b, this.mat.points)
+      if (this.pointCloud) this.pointCloud.visualize(b, this.mat.points, this.scene)
     })
 
     sel = "#pVisualizeVertexNormals"
@@ -181,8 +181,8 @@ export class Engine {
       lastX = ev.offsetX
       lastY = ev.offsetY
       if (ev.ctrlKey) {
-        if (lastX !== 0) this.lightPivot.rotate(new BABYLON.Vector3(0, 1, 0), dx)
-        if (lastY !== 0) this.lightPivot.rotate(new BABYLON.Vector3(0, 0, 1), dy)
+        if (lastX !== 0) this.lightPivot.rotate(new BABYLON.Vector3(0, 0, 1), -dx)
+        if (lastY !== 0) this.lightPivot.rotate(new BABYLON.Vector3(0, 1, 0), -dy)
       }
     })
   }
@@ -236,7 +236,7 @@ export class Engine {
       if (asPointCloud) {
         const scale = file === "cat.off" ? .01 : 1
         this.pointCloud = new PointCloud(meshes[0] as BABYLON.Mesh, file, scale)
-        this.pointCloud.visualize(getCheckbox($("#pVisualizePointCloud")), this.mat.points)
+        this.pointCloud.visualize(getCheckbox($("#pVisualizePointCloud")), this.mat.points, this.scene)
         this.pointCloud.visualizeNormals(getCheckbox($("#pVisualizeVertexNormals")), getColor("white"), this.scene)
         this.buildGrid()
       } else {

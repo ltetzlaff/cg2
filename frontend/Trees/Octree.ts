@@ -1,4 +1,4 @@
-import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
+import * as BABYLON from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 import { TreesUtils } from "./TreesUtils"
 import { Tree } from "./Tree"
 import { IVisualizable, getExtents } from "../Utils"
@@ -153,7 +153,7 @@ export class Octree extends Octant implements Tree, IVisualizable {
   }
 
   query(startingPoint : BABYLON.Vector3 | BABYLON.Vector2, pattern : TreesUtils.FindingPattern, options : any) : BABYLON.Vector3[] | number[] {
-    if (!(options.radius === 0 || options.radius > 0)) {
+    if (pattern === TreesUtils.FindingPattern.KNearest) {
       options.radius = Number.MAX_VALUE // knearest just needs a point
     }
 

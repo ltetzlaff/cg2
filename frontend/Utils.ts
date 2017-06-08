@@ -1,4 +1,4 @@
-import * as BABYLON from "../node_modules/babylonjs/babylon.module"
+import * as BABYLON from "../node_modules/babylonjs/dist/preview release/babylon.module"
 
 export interface IVisualizable {
   visualization : BABYLON.InstancedMesh[] | BABYLON.Mesh[] | BABYLON.Mesh

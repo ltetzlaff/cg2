@@ -1,4 +1,4 @@
-import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
+import * as BABYLON from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 import * as math from "mathjs"
 import { Tree } from "../Trees/Tree"
 import { IVisualizable } from "../Utils"

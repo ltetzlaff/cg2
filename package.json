@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "postinstall": "cp node_modules/babylonjs/babylon.js node_modules/babylonjs/babylon.module.js || copy node_modules\\babylonjs\\babylon.js node_modules\\babylonjs\\babylon.module.js",
+    "postinstall": "cp node_modules/babylonjs/dist/preview\\ release/babylon.js node_modules/babylonjs/dist/preview\\ release/babylon.module.js || copy node_modules\\babylonjs\\dist\\preview release\\babylon.js node_modules\\babylonjs\\dist/preview release\\babylon.module.js",
     "build": "webpack --watch",
     "buildOnce": "webpack",
     "server": "nodemon server/server.js --watch .",
@@ -16,8 +16,7 @@
   "author": "lt",
   "license": "MIT",
   "dependencies": {
-    "@types/mathjs": "0.0.34",
-    "babylonjs": "^3.0.0-alpha",
+    "babylonjs": "^3.0.2-beta",
     "express": "^4.15.2",
     "jquery": "^3.2.1",
     "materialize-css": "^0.98.2",
@@ -26,6 +25,7 @@
     "pug": "^2.0.0-beta.12"
   },
   "devDependencies": {
+    "@types/mathjs": "0.0.34",    
     "@types/express": "^4.0.35",
     "@types/morgan": "^1.7.32",
     "@types/pug": "^2.0.4",

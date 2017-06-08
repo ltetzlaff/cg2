@@ -1,4 +1,4 @@
-import * as BABYLON from "../../node_modules/babylonjs/babylon.module"
+import * as BABYLON from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 import { TreesUtils } from "../Trees/TreesUtils"
 import { IVisualizable } from "../Utils"
 import { PointCloud } from "./PointCloud"
