@@ -1,12 +1,11 @@
 import { 
   Vector3, Color3, Mesh, AbstractMesh, 
-  ArcRotateCamera, PointLight, Light, Scene, 
-  Material, StandardMaterial,
+  ArcRotateCamera, PointLight, Light, Scene, Material,
   Engine, AssetsManager, SceneLoader
 } from "../node_modules/babylonjs/dist/preview release/babylon.module"
 import { TreesUtils } from "./Trees/TreesUtils"
 import { Tree } from "./Trees/Tree"
-import { getExtents } from "./Utils"
+import { getExtents, StdMaterial, PointCloudMaterial, WireFrameMaterial } from "./Utils"
 import { Octree, OctreeOptions } from "./Trees/Octree"
 import { PointCloud } from "./Surfaces/PointCloud"
 import { Grid3D, GridOptions } from "./Surfaces/Grid3D"
@@ -89,7 +88,7 @@ export class App {
 
     sel = "#pVisualizeVertexNormals"
     bindOnChangeCheckbox(sel, b => {
-      if (this.pointCloud) this.pointCloud.visualizeNormals(b, getColor("white"), this.scene)
+      if (this.pointCloud) this.pointCloud.visualizeNormals(b, "white", this.scene)
     })
 
     sel = "#pVisualizeTree"
@@ -242,45 +241,13 @@ export class App {
         const scale = file === "cat.off" ? .01 : 1
         this.pointCloud = new PointCloud(meshes[0] as Mesh, file, scale)
         this.pointCloud.visualize(getCheckbox($("#pVisualizePointCloud")), this.mat.points, this.scene)
-        this.pointCloud.visualizeNormals(getCheckbox($("#pVisualizeVertexNormals")), getColor("white"), this.scene)
+        this.pointCloud.visualizeNormals(getCheckbox($("#pVisualizeVertexNormals")), "white", this.scene)
         this.buildGrid()
       } else {
         meshes[0].material = this.mat.points
         this.scene.meshes.push(meshes[0])
       }
     })
-  }
-}
-
-function capitalize(str : string) {
-  return str.charAt(0).toUpperCase() + str.slice(1)
-}
-function getColor(str : string) {
-  return Color3[capitalize(str)]()
-}
-
-class StdMaterial extends StandardMaterial {
-  constructor(color : string, scene : Scene) {
-    super("mat", scene)
-    this.diffuseColor = getColor(color)
-  }
-}
-
-class PointCloudMaterial extends StandardMaterial {
-  constructor(color : string, scene : Scene, unlit = false, pointSize = 4) {
-    super("pointCloud", scene)
-    this.diffuseColor = getColor(color)
-    this.pointsCloud = true
-    this.pointSize = pointSize
-    this.disableLighting = unlit // enable this if you want to hide heavy zfighting
-  }
-}
-
-class WireFrameMaterial extends StandardMaterial {
-  constructor(color : string, scene : Scene) {
-    super("wireframe", scene)
-    this.diffuseColor = getColor(color)
-	  this.wireframe = true
   }
 }
 

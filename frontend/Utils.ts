@@ -1,4 +1,7 @@
-import { Vector3, Mesh, InstancedMesh, Color3, Scene, VertexBuffer, Material, MeshBuilder } from "../node_modules/babylonjs/dist/preview release/babylon.module"
+import { 
+  Vector3, Mesh, InstancedMesh, Color3, StandardMaterial,
+  Scene, VertexBuffer, Material, MeshBuilder 
+} from "../node_modules/babylonjs/dist/preview release/babylon.module"
 
 export interface IVisualizable {
   visualization : InstancedMesh[] | Mesh[] | Mesh
@@ -6,12 +9,12 @@ export interface IVisualizable {
 
   visualize(showOrHide : boolean, material : Material, scene? : Scene) : void
 
-  visualizeNormals?(showOrHide : boolean, color : Color3, scene? : Scene) : void
+  visualizeNormals?(showOrHide : boolean, color : string, scene? : Scene) : void
 
   destroy() : void
 }
 
-export function showVertexNormals(vertices : Vector3[], normals : Vector3[], scene : Scene, offset : Vector3= new Vector3(0, 0, 0)) {
+export function showVertexNormals(vertices : Vector3[], normals : Vector3[], scene : Scene, color : string, offset : Vector3= new Vector3(0, 0, 0)) {
   const { min, max } = getExtents(vertices)
   const diff = max.subtract(min)
   const length = .05 * Math.max(diff.x, diff.y, diff.z)
@@ -20,12 +23,14 @@ export function showVertexNormals(vertices : Vector3[], normals : Vector3[], sce
     const v2 = v1.add(n.scale(length))
     return [ v1.add(offset), v2.add(offset) ]
   })
-  return MeshBuilder.CreateLineSystem("lines", { lines, updatable: false }, scene)
+  const ls = MeshBuilder.CreateLineSystem("lines", { lines, updatable: false }, scene)
+  ls.color = getColor(color)
+  return ls
 }
 
-export function showMeshsVertexNormals(mesh : Mesh) {
+export function showMeshsVertexNormals(mesh : Mesh, color : string) {
   const { positions, normals } = getVertexData(mesh)
-  return showVertexNormals(positions, normals, mesh.getScene(), mesh.position)
+  return showVertexNormals(positions, normals, mesh.getScene(), color, mesh.position)
 }
 
 export function getVertexData(mesh : Mesh) {
@@ -62,5 +67,38 @@ export function getExtents(points : Vector3[], pad? : boolean) {
     return { min: min.subtract(padding), max: max.add(padding)}
   } else {
     return { min, max }
+  }
+}
+
+export function capitalize(str : string) {
+  return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
+export function getColor(str : string) {
+  return Color3[capitalize(str)]()
+}
+
+export class StdMaterial extends StandardMaterial {
+  constructor(color : string, scene : Scene) {
+    super("mat", scene)
+    this.diffuseColor = getColor(color)
+  }
+}
+
+export class PointCloudMaterial extends StandardMaterial {
+  constructor(color : string, scene : Scene, unlit = false, pointSize = 4) {
+    super("pointCloud", scene)
+    this.diffuseColor = getColor(color)
+    this.pointsCloud = true
+    this.pointSize = pointSize
+    this.disableLighting = unlit // enable this if you want to hide heavy zfighting
+  }
+}
+
+export class WireFrameMaterial extends StandardMaterial {
+  constructor(color : string, scene : Scene) {
+    super("wireframe", scene)
+    this.diffuseColor = getColor(color)
+	  this.wireframe = true
   }
 }

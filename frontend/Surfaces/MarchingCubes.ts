@@ -1,4 +1,4 @@
-import { Vector3, Mesh, Color3, Scene, Material } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
+import { Vector3, Mesh, Scene, Material } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 import { IVisualizable, showMeshsVertexNormals } from "../Utils"
 
 export enum MCAlgo {
@@ -15,12 +15,11 @@ export class MCMesh extends Mesh implements IVisualizable {
     this.dispose()
   }
 
-  visualizeNormals(show : boolean, color : Color3, scene? : Scene) {
+  visualizeNormals(show : boolean, color : string, scene? : Scene) {
     if (this.normalVisualization) this.normalVisualization.dispose()
     if (!show) return
 
-    const ls = showMeshsVertexNormals(this)
-    ls.color = color
+    const ls = showMeshsVertexNormals(this, color)
     this.normalVisualization = ls
   }
 

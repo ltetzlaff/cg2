@@ -1,4 +1,4 @@
-import { Vector3, Color3, Color4, Mesh, Scene, Material, VertexBuffer } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
+import { Vector3, Color4, Mesh, Scene, Material, VertexBuffer } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 import { IVisualizable } from "../Utils"
 import { PointCloud } from "./PointCloud"
 import { Grid3D } from "./Grid3D"
@@ -102,7 +102,7 @@ export class ImplicitSamples implements IVisualizable {
     grid.visualization.hasVertexAlpha = true
   }
 
-  public visualizeNormals(show : boolean, color : Color3, scene : Scene) {
+  public visualizeNormals(show : boolean, color : string, scene : Scene) {
     if (this.inner) this.inner.visualizeNormals(show, color, scene)
     if (this.outer) this.outer.visualizeNormals(show, color, scene)
   }

@@ -33,12 +33,11 @@ export class PointCloud implements IVisualizable {
     this.tree = new Octree(this.vertices, opts)
   }
 
-  public visualizeNormals(show : boolean, color : Color3, scene : Scene) {
+  public visualizeNormals(show : boolean, color : string, scene : Scene) {
     if (this.normalVisualization) this.normalVisualization.dispose()
     if (!show) return
     
-    const ls = showVertexNormals(this.vertices, this.normals, scene)
-    ls.color = color
+    const ls = showVertexNormals(this.vertices, this.normals, scene, color)
     this.normalVisualization = ls
   }
 

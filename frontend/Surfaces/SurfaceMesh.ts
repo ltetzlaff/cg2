@@ -84,16 +84,14 @@ export class SurfaceMesh extends Mesh implements IVisualizable {
     this.dispose()
   }
 
-  visualizeNormals(show : boolean, color : Color3, scene? : Scene) {
+  visualizeNormals(show : boolean, color : string, scene? : Scene) {
     if (this.normalVisualization) this.normalVisualization.dispose()
     if (!show) return
 
-    const ls = showMeshsVertexNormals(this)
-    ls.color = color
-    this.normalVisualization = ls
+    this.normalVisualization = showMeshsVertexNormals(this, color)
   }
 
-  public visualize(show : boolean, material : Material, _scene?: Scene) {
+  public visualize(show : boolean, material : Material, scene?: Scene) {
     this.isVisible = show
     if (!show) return
 
