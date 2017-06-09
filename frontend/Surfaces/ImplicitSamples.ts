@@ -13,7 +13,6 @@ export class ImplicitSamples implements IVisualizable {
   private inner : PointCloud
   private source : PointCloud
   private outer : PointCloud
-  private samples : { position : Vector3, color : Color4 }[]
 
   constructor(source : PointCloud, grid : Grid3D) {
     const isNearest = (p : Vector3, p2 : Vector3) => {
@@ -52,43 +51,55 @@ export class ImplicitSamples implements IVisualizable {
     this.epsilon = epsilon
     this.inner = new PointCloud(innerPoints)
     this.outer = new PointCloud(outerPoints)
-    this.samples = []
   }
 
   sample(grid : Grid3D) : void {
     console.log("sampling")
     const { wendlandRadius, radius } = grid.gridOptions
 
-    const vertexColors : number[] = []
+    const samples : number[] = []
+    let maxSample = -Number.MAX_VALUE
     grid.iterateVertices((position, i) => {
       const implicitValue = calculateMLSPoint(
         position, 
         wendlandRadius,
         radius,
         this.source.tree, 
-        PolynomialBasis.Constant(), 
+        PolynomialBasis.Constant(3), 
         [this.inner.vertices, this.source.vertices, this.outer.vertices],
         this.epsilon
       )
 
-      const color = new Color4(0, 0, 0, 1)
-      if (implicitValue <= -this.epsilon) {
-        color.r = implicitValue
-      } else if (implicitValue >= this.epsilon) {
-        color.b = implicitValue
-      }
+      samples.push(implicitValue)
+      if (implicitValue > maxSample) maxSample = implicitValue
       /* #DEBUG
       color.r = 1
       color.g = .2
       color.b = .5
       */
-      color.toArray(vertexColors, i*4)
-      this.samples.push({ position, color })
-      console.log(implicitValue.toFixed(4), this.epsilon.toFixed(4))
+      //console.log(implicitValue.toFixed(4), this.epsilon.toFixed(4))
+    })
+
+    const stretch = (n : number) => (n/maxSample)
+
+    const vertexColors : number[] = []
+    samples.forEach((s, i) => {
+      const color = new Color4(0, 0, 0, 1)
+      if (s < 0) {
+        color.r = stretch(s)
+        color.a = .1
+      } else if (s > 0) {
+        color.b = stretch(s)
+      } else {
+        color.g = 1
+      }
+      //console.log(color)
+      color.toArray(vertexColors, i*4)    
     })
     
     grid.visualization.setVerticesData(VertexBuffer.ColorKind, vertexColors)
     grid.visualization.useVertexColors = true
+    grid.visualization.hasVertexAlpha = true
   }
 
   public visualizeNormals(show : boolean, color : Color3, scene : Scene) {

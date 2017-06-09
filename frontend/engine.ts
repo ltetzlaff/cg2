@@ -55,7 +55,7 @@ export class App {
     this.mat = {
       points: new PointCloudMaterial("red", s),
       tree: new WireFrameMaterial("yellow", s),
-      grid: new PointCloudMaterial("white", s),
+      grid: new PointCloudMaterial("white", s, false, 8),
       implicitSamples: new PointCloudMaterial("green", s),
       mcMesh: new StdMaterial("purple", s)
     }
@@ -267,11 +267,11 @@ class StdMaterial extends StandardMaterial {
 }
 
 class PointCloudMaterial extends StandardMaterial {
-  constructor(color : string, scene : Scene, unlit = false) {
+  constructor(color : string, scene : Scene, unlit = false, pointSize = 4) {
     super("pointCloud", scene)
     this.diffuseColor = getColor(color)
     this.pointsCloud = true
-    this.pointSize = 4
+    this.pointSize = pointSize
     this.disableLighting = unlit // enable this if you want to hide heavy zfighting
   }
 }

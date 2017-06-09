@@ -78,7 +78,7 @@ export function calculateMLSPoint(
   let m = math.zeros(d, d)
   let v = math.zeros(d)
 
-  const implicitFactors = [epsilon, 0, -epsilon]
+  const implicitFactors = [-epsilon, 0, epsilon]
   for (let j = 0; j < arrays.length; j++) {
     const points = arrays[j]
     const implicitWeight = implicitFactors[j]
@@ -98,25 +98,31 @@ export function calculateMLSPoint(
   return f
 }
 
-export function calculateWLSPoint(gridPoint : Vector3, wendlandRadius : number, queryDelegate : (v2: Vector2) => Vector3[]) {
+export function calculateWLSPoint(
+  gridPoint : Vector3, 
+  wendlandRadius : number, 
+  queryDelegate : (v2: Vector2) => Vector3[],
+  basis : PolynomialBasis) {
   const {x, z} = gridPoint
   const nearbyPoints = queryDelegate(new Vector2(x, z))
   if (nearbyPoints.length <= 1) return null
   
-  const dims = 6
-  let m = math.zeros(dims, dims)
-  let v = math.zeros(dims)
-  nearbyPoints.forEach(p => {
-    const weight = wendland(gridPoint, p, wendlandRadius)
+  const d = basis.length
+  let m = math.zeros(d, d)
+  let v = math.zeros(d)
+  nearbyPoints.forEach(point => {
+    const p = new Vector2(point.x, point.z)
+    const f = point.y
+
+    const weight = wendland(gridPoint, point, wendlandRadius)
 
     // add weighted systemMatrix
-    m = math.add(m, math.multiply(Matrix(p.x, p.z), weight)) as number[][]
-    v = math.add(v, math.multiply(Vector(p.x, p.z), p.y * weight)) as number[]
+    m = math.add(m, math.multiply(basis.matrix(p), weight)) as number[][]
+    v = math.add(v, math.multiply(basis.vector(p), weight * f)) as number[]
   })
 
-  const vector = Vector(x, z)
   const coeffs = math.multiply(math.inv(m), v)
-  const y = math.dot(vector, coeffs as number[])
+  const y = math.dot(basis.vector(new Vector2(x, z)), coeffs as number[])
   
   // Calculate Normal based on perpendicular tangents
   // tangent'y is coeffs derived by u or v
@@ -128,31 +134,4 @@ export function calculateWLSPoint(gridPoint : Vector3, wendlandRadius : number, 
     .scaleInPlace(-1)
 
   return { point : new Vector3(x, y, z) , normal }
-}
-
-function Vector(u : number, v : number) {
-  return [1, u, v, u * u, u * v, v * v]
-}
-
-function Matrix(u : number, v : number) {
-  const uv = u * v
-  const u2 = u * u
-  const u2v = u2 * v
-  const u3 = u2 * u
-  const u3v = u3 * v
-  const v2 = v * v
-  const v2u = v2 * u
-  const v3 = v2 * v
-  const v3u = v3 * u
-  const v3v = v3 * v
-  const u2v2 = u2 * v2
-
-  return [
-    [1    , u     , v     , u2    , uv    , v2    ],
-    [u    , u2    , uv    , u3    , u2v   , v2u   ],
-    [v    , uv    , v2    , u2v   , v2u   , v3    ],
-    [u2   , u3    , u2v   , u3*u  , u3v   , u2v2  ],
-    [uv   , u2v   , v2u   , u3v   , u2v2  , v3u   ],
-    [v2   , v2u   , v3    , u2v2  , v3u   , v3v   ]
-  ]
 }
