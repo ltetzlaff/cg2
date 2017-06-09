@@ -6,6 +6,7 @@ import { Grid3D } from "./Grid3D"
 import { PointCloud } from "./PointCloud"
 import { TreesUtils } from "../Trees/TreesUtils"
 import { solveDeCasteljau, calculateWLSPoint } from "./SurfaceUtils"
+import { PolynomialBasis } from "./PolynomialBasis"
 
 export class Surface implements IVisualizable {
   public visualization : Mesh
@@ -43,7 +44,7 @@ export class Surface implements IVisualizable {
 
         if (isOnGrid || subdivideWithPolynomials) {
           // calculate WLS Point
-          const { point, normal } = calculateWLSPoint(gridPoint, wendlandRadius, queryDelegate)
+          const { point, normal } = calculateWLSPoint(gridPoint, wendlandRadius, queryDelegate, PolynomialBasis.Quadratic(2))
           if (clamp) point.y = MathTools.Clamp(point.y, grid.min.y, grid.max.y)
           points.push(point)
           normals.push(normal)
