@@ -54,7 +54,7 @@ export class App {
     this.mat = {
       points: new PointCloudMaterial("red", s),
       tree: new WireFrameMaterial("yellow", s),
-      grid: new PointCloudMaterial("white", s, false, 8),
+      grid: new PointCloudMaterial("white", s, false, 6),
       implicitSamples: new PointCloudMaterial("green", s),
       mcMesh: new StdMaterial("purple", s)
     }
@@ -117,17 +117,10 @@ export class App {
     })
 
     // Implicit Sampling
-    sel = "#pRadius"
-    go.radius = getFloat($(sel))
-    bindOnChangeNumeric(sel, n => {
-      go.radius = n
-      this.runImplicitSampling()
-    })
-
-    sel = "#pWendlandRadius"
-    go.wendlandRadius = getFloat($(sel))
-    bindOnChangeNumeric(sel, n => {
-      go.wendlandRadius = n
+    sel = "poly"
+    go.polynomialBasis = getRadioValue(sel)
+    bindOnChangeRadio(sel, s => {
+      go.polynomialBasis = s
       this.runImplicitSampling()
     })
 

@@ -11,13 +11,14 @@ block content
       +checkbox("pVisualizeTree", "Draw Tree")
 
       h3 Grid
-      +number("pSubdivisions", "Subdivisions", 5, 1)
+      +number("pSubdivisions", "Subdivisions", 10, 1)
       +number("pBBPadding", "Bounding Box Padding%", 0.1, .05)
       +checkbox("pVisualizeGrid", "Draw Grid", true)      
 
       h3 Implicit Sampling
-      +number("pRadius", "Picking Radius", 1, .1)              
-      +number("pWendlandRadius", "Wendland Radius", 5.1, .1)              
+      +radio("poly", "Constant", true)
+      +radio("poly", "Linear")
+      +radio("poly", "Quadratic")      
       +checkbox("pRunImplicitSampling", "Run Implicit Sampling", true)
       +checkbox("pVisualizeImplicit", "Draw Sampling Results", true)
       
