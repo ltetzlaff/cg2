@@ -60,9 +60,20 @@ export class PolynomialBasis {
   }
 
   matrix(v : Vector3 | Vector2) {
+    // outer product because v*vT with Mathjs will coerce to scalar
     const vector = this.vector(v)
-    return math.multiply(vector, math.transpose(vector))
-  }
+
+    const d = vector.length
+    const m = new Array<Array<number>>(d)
+    for (let i = 0; i < d; i++) {
+      m[i] = new Array<number>(d)
+
+      for (let j = 0; j < d; j++) {
+        m[i][j] = vector[i] * vector[j]
+      }
+    }
+    return m
+   }
 
   static Constant(dimensions : number) {
     return new PolynomialBasis(Degree.Constant, dimensions)
