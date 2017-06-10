@@ -185,6 +185,8 @@ export class Octree extends Octant implements Tree, IVisualizable {
             if (volume.contains(p)) candidates.push({ p, i })
           })
         })
+        candidates = candidates
+          .sort((a, b) => volume.distanceToCenter(a.p) - volume.distanceToCenter(b.p))          
         break
     }
     //console.timeEnd("  - finding Query")

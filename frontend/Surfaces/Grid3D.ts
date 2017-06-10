@@ -16,6 +16,7 @@ export class GridOptions {
   public k = 1
   public wendlandRadius = .2
   public clamp = false
+  public polynomialBasis = "Constant"
 
   public buildMCMesh = true
   public mcAlgo = MCAlgo.MarchingCubes
@@ -28,11 +29,14 @@ export class Grid3D implements IVisualizable {
   public min : Vector3
   public max : Vector3
   public resolution : Vector3
+  public diagonal : number
 
   constructor(min : Vector3, max : Vector3, gridOptions : GridOptions) {
     this.gridOptions = gridOptions
 
     const diff = max.subtract(min)
+    this.diagonal = diff.length()
+
     const pad = diff.scale(gridOptions.padding)
     this.min = min.subtract(pad)
     this.max = max.add(pad)

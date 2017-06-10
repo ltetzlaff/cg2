@@ -55,45 +55,43 @@ export class ImplicitSamples implements IVisualizable {
 
   sample(grid : Grid3D) : void {
     console.log("sampling")
-    const { wendlandRadius, radius } = grid.gridOptions
+    const { wendlandRadius, radius, polynomialBasis } = grid.gridOptions
 
     const samples : number[] = []
-    let maxSample = -Number.MAX_VALUE
-    grid.iterateVertices((position, i) => {
+    let minSample = Number.MAX_VALUE
+
+    // pick around roughly resolution sphere worked really well
+    const pickingRadius = 1/(grid.gridOptions.subdivisions + 1) * grid.diagonal
+
+    grid.iterateVertices(position => {
       const implicitValue = calculateMLSPoint(
         position, 
-        wendlandRadius,
-        radius,
+        pickingRadius, 
         this.source.tree, 
-        PolynomialBasis.Constant(3), 
+        PolynomialBasis[polynomialBasis](3), 
         [this.inner.vertices, this.source.vertices, this.outer.vertices],
         this.epsilon
       )
 
       samples.push(implicitValue)
-      if (implicitValue > maxSample) maxSample = implicitValue
-      /* #DEBUG
-      color.r = 1
-      color.g = .2
-      color.b = .5
-      */
-      //console.log(implicitValue.toFixed(4), this.epsilon.toFixed(4))
-    })
+      if (implicitValue < minSample) minSample = implicitValue
+    }, true)
+    minSample = Math.abs(minSample)
 
-    const stretch = (n : number) => (n/maxSample)
+    //const stretch = (n : number) => Math.abs(n)/maxSample
+    const stretch = (n : number) => n / minSample
 
     const vertexColors : number[] = []
     samples.forEach((s, i) => {
       const color = new Color4(0, 0, 0, 1)
-      if (s < 0) {
+      if (s > 0) {
         color.r = stretch(s)
-        color.a = .1
-      } else if (s > 0) {
-        color.b = stretch(s)
+        color.a = .2
+      } else if (s < 0) {
+        color.b = 1 + stretch(s)
       } else {
         color.g = 1
       }
-      //console.log(color)
       color.toArray(vertexColors, i*4)    
     })
     

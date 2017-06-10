@@ -54,7 +54,6 @@ export function wendland(a : Vector3, b : Vector3, radius : number) {
 
 export function calculateMLSPoint(
   gridPoint : Vector3,
-  wendlandRadius : number,
   radius : number,
   tree : Tree,
   basis : PolynomialBasis,
@@ -67,12 +66,19 @@ export function calculateMLSPoint(
 
   let nearbyPoints : number[]
   nearbyPoints = query(TreesUtils.FindingPattern.Radius)
+
+  if (nearbyPoints.length === 0) {
+    return Number.MAX_VALUE  
+  }
+
   if (nearbyPoints.length < basis.length) {
     nearbyPoints = query(TreesUtils.FindingPattern.KNearest)
   }
   if (nearbyPoints.length < basis.length) {
-    throw new RangeError("KNearest Picking didnt return " + basis.length + ") points")
-  }  
+    throw new RangeError("KNearest Picking didnt return (" + basis.length + ") points")
+  }
+
+  const maxDistance = Vector3.Distance(gridPoint, arrays[1][nearbyPoints[nearbyPoints.length - 1]])
 
   const d = basis.length
   let m = math.zeros(d, d)
@@ -82,10 +88,10 @@ export function calculateMLSPoint(
   for (let j = 0; j < arrays.length; j++) {
     const points = arrays[j]
     const implicitWeight = implicitFactors[j]
-
+    
     nearbyPoints.forEach(i => {
       const p = points[i]
-      const weight = wendland(gridPoint, p, wendlandRadius)
+      const weight = wendland(gridPoint, p, maxDistance)
 
       // add weighted systemMatrix
       m = math.add(m, math.multiply(basis.matrix(p), weight)) as number[][]
