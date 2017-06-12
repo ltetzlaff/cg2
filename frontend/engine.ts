@@ -117,6 +117,13 @@ export class App {
     })
 
     // Implicit Sampling
+    sel = "#pRadius"
+    go.radius = getFloat($(sel))
+    bindOnChangeNumeric(sel, n => {
+      go.radius = n
+      this.runImplicitSampling()
+    })
+    
     sel = "poly"
     go.polynomialBasis = getRadioValue(sel)
     bindOnChangeRadio(sel, s => {
