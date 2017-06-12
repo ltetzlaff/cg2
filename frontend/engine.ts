@@ -221,7 +221,8 @@ export class App {
 
     if (!this.gridOptions.buildMCMesh) return
 
-    // #TODO  
+    this.mcMesh = new MCMesh(this.implicitSamples)
+    this.mcMesh.visualize(getCheckbox($("#pVisualizeMCMesh")), this.mat.mcMesh, this.scene)
   }
 
   load(file : string, asPointCloud : boolean = false) : void {
