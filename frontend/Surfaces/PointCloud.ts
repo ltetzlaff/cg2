@@ -80,7 +80,8 @@ export class PointCloud implements IVisualizable {
   }
 
   public destroy() {
-    this.visualization.dispose()
+    if (this.visualization) this.visualization.dispose()
+    if (this.normalVisualization) this.normalVisualization.dispose()
   }
 
   public toTriangleMesh(Grid3D : Grid3D, mesh : Mesh) : Mesh {

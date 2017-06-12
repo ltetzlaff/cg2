@@ -9,6 +9,7 @@ import { PolynomialBasis } from "./PolynomialBasis"
 export class ImplicitSamples implements IVisualizable {
   public visualization : Mesh = null
 
+  public samples : { position: Vector3, implicitValue: number }[]
   private epsilon : number
   private inner : PointCloud
   private source : PointCloud
@@ -48,6 +49,7 @@ export class ImplicitSamples implements IVisualizable {
       innerPoints.push(pIn)
     })
     
+    this.samples = []
     this.epsilon = epsilon
     this.inner = new PointCloud(innerPoints)
     this.outer = new PointCloud(outerPoints)
@@ -57,7 +59,7 @@ export class ImplicitSamples implements IVisualizable {
     console.log("sampling")
     const { wendlandRadius, radius, polynomialBasis } = grid.gridOptions
 
-    const samples : number[] = []
+    this.samples = []
     let minSample = Number.MAX_VALUE
 
     // pick around roughly resolution sphere worked really well
@@ -73,7 +75,7 @@ export class ImplicitSamples implements IVisualizable {
         this.epsilon
       )
 
-      samples.push(implicitValue)
+      this.samples.push({ position, implicitValue })
       if (implicitValue < minSample) minSample = implicitValue
     }, true)
     minSample = Math.abs(minSample)
@@ -82,13 +84,14 @@ export class ImplicitSamples implements IVisualizable {
     const stretch = (n : number) => n / minSample
 
     const vertexColors : number[] = []
-    samples.forEach((s, i) => {
+    this.samples.forEach((s, i) => {
       const color = new Color4(0, 0, 0, 1)
-      if (s > 0) {
-        color.r = stretch(s)
+      const f = s.implicitValue
+      if (f > 0) {
+        color.r = stretch(f)
         color.a = .2
-      } else if (s < 0) {
-        color.b = 1 + stretch(s)
+      } else if (f < 0) {
+        color.b = 1 + stretch(f)
       } else {
         color.g = 1
       }
