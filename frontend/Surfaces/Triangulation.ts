@@ -1,7 +1,7 @@
 // ripped from http://paulbourke.net/geometry/polygonise/
 import { Vector3, Vector2 } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 
-export const PointsOrder = [
+export const PointsOfCube = [
   [0, 0, 0],
   [1, 0, 0],
   [1, 0, 1],
@@ -12,25 +12,14 @@ export const PointsOrder = [
   [0, 1, 1]
 ].map(a => new Vector3(a[0], a[1], a[2]))
 
-export const EdgeOrder = [
-  [0, 1],
-  [1, 2],
-  [2, 3],
-
-  [3, 0],
-  [4, 5],
-  [5, 6],
-
-  [6, 7],
-  [7, 4],
-  [0, 4],
-
-  [1, 5],
-  [2, 6],
-  [3, 7]
+export const EdgesOfCube = [
+  [0, 1], [1, 2], [2, 3],
+  [3, 0], [4, 5], [5, 6],
+  [6, 7], [7, 4], [0, 4],
+  [1, 5], [2, 6], [3, 7]
 ].map(a => new Vector2(a[0], a[1]))
 
-export const Edges = [
+export const EdgesMask = [
   0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
   0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
   0x190, 0x99 , 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
@@ -65,7 +54,7 @@ export const Edges = [
   0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0   
 ]
 
-export const Pattern = [
+export const FacesMask = [
   [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
   [0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
   [0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
