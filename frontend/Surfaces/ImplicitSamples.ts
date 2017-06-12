@@ -63,7 +63,7 @@ export class ImplicitSamples implements IVisualizable {
     let minSample = Number.MAX_VALUE
 
     // pick around roughly resolution sphere worked really well
-    const pickingRadius = 1/(grid.gridOptions.subdivisions + 1) * grid.diagonal
+    const pickingRadius = radius * grid.diagonal
 
     grid.iterateVertices(position => {
       const implicitValue = calculateMLSPoint(
@@ -89,7 +89,7 @@ export class ImplicitSamples implements IVisualizable {
       const f = s.implicitValue
       if (f > 0) {
         color.r = stretch(f)
-        color.a = .2
+        color.a = 1/(grid.gridOptions.subdivisions) // get more transp with more subdivs
       } else if (f < 0) {
         color.b = 1 + stretch(f)
       } else {
