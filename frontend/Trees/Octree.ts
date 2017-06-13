@@ -152,7 +152,7 @@ export class Octree extends Octant implements Tree, IVisualizable {
     return this.query(startingPoint, pattern, options) as Vector3[]
   }
 
-  query(startingPoint : Vector3 | Vector2, pattern : TreesUtils.FindingPattern, options : any) : Vector3[] | number[] {
+  query(startingPoint : Vector3 | Vector2, pattern : TreesUtils.FindingPattern, options : any) : Vector3[] {
     if (pattern === TreesUtils.FindingPattern.KNearest) {
       options.radius = Number.MAX_VALUE // knearest just needs a point
     }
@@ -169,31 +169,27 @@ export class Octree extends Octant implements Tree, IVisualizable {
     intersectedOctants = this.findIntersecting(volume)
 
     //console.time("  - finding Query")
-    let candidates : { p: Vector3, i: number}[] = []
+    let candidates : Vector3[] = []
     switch (pattern) {
       case TreesUtils.FindingPattern.KNearest:
         intersectedOctants.forEach(octant => {
-          candidates.push(...octant.points.map((p, i) => ({ p, i })))            
+          candidates.push(...octant.points)            
         })
         candidates = candidates
-          .sort((a, b) => volume.distanceToCenter(a.p) - volume.distanceToCenter(b.p))
+          .sort((a, b) => volume.distanceToCenter(a) - volume.distanceToCenter(b))
           .slice(0, options.k)
         break
       case TreesUtils.FindingPattern.Radius:
         intersectedOctants.forEach(octant => {
-          octant.points.forEach((p, i) => {
-            if (volume.contains(p)) candidates.push({ p, i })
+          octant.points.forEach(p => {
+            if (volume.contains(p)) candidates.push(p)
           })
         })
         candidates = candidates
-          .sort((a, b) => volume.distanceToCenter(a.p) - volume.distanceToCenter(b.p))          
+          .sort((a, b) => volume.distanceToCenter(a) - volume.distanceToCenter(b))          
         break
     }
     //console.timeEnd("  - finding Query")
-    if (options.justIndices) {
-      return candidates.map(c => c.i)
-    } else {
-      return candidates.map(c => c.p)
-    }
+    return candidates
   }
 }
