@@ -23,8 +23,6 @@ export class MCMesh implements IVisualizable {
     this.indices = []
     
     const { samples } = implicitSamples
-    //const dim = (Math.pow(samples.length, 1/3) | 0) + 1// third root
-    //console.log("dim:", dim, "samples:", samples.length)
     
     // Get Index for Sample Lookup    
     const dim = grid.gridOptions.subdivisions + 1    
@@ -40,7 +38,6 @@ export class MCMesh implements IVisualizable {
       const cubePoints = PointsOfCube.map((o, n) => {
         const i = index(new Vector3(x, y, z), o)
         const s = samples[i]
-        //console.log(s.position, o, x, y, z, i, samples.length)
         if (s.implicitValue < 0) cubePatternIndex |= (2 ** n)
         return s
       })
@@ -61,14 +58,12 @@ export class MCMesh implements IVisualizable {
         
         let vertex : Vector3
         const divisor = b.implicitValue - a.implicitValue
-        const t = MathTools.Clamp(-a.implicitValue/divisor, 0, 1)
-        //const t = Math.abs(divisor) > .1 ? -a.implicitValue/divisor : 0
+        const t = Math.abs(divisor) > .001 ? -a.implicitValue/divisor : 0
         vertex = Vector3.Lerp(a.position, b.position, t)
         corners.push(vertex)
       }
 
       // Get Cube's Triangulation Pattern
-      //console.log(cubePatternIndex)
       const cubePattern = FacesMask[cubePatternIndex]
       const indexOffset = this.vertices.length
 
@@ -80,7 +75,7 @@ export class MCMesh implements IVisualizable {
           if (index === -1) break
           this.indices.push(this.vertices.length)              
           this.vertices.push(new Vertex(corners[index]))
-        }            
+        }          
       }
     })
   }
@@ -95,18 +90,15 @@ export class MCMesh implements IVisualizable {
 
   public visualize(show : boolean, material : Material, scene : Scene) {
     if (this.visualization) this.visualization.isVisible = show
-
-    if (!show) {
-      return
-    }
+    if (!show) return
 
     if (!this.visualization) {
       this.visualization = new Mesh("surfaceVisualization", scene)
-      //console.log(this.vertices, this.indices)
 
       const vd = getVertexData(this.vertices)
       vd.indices = this.indices
       vd.applyToMesh(this.visualization)
+      this.visualization.convertToFlatShadedMesh()
     }
 
     this.visualization.material = material
