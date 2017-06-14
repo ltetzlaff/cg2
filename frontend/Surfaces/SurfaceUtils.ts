@@ -1,7 +1,7 @@
 import { Vector3, Vector2 } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 import * as math from "mathjs"
 import { Tree } from "../Trees/Tree"
-import { TreesUtils } from "../Trees/TreesUtils"
+import { TreesUtils, Vertex } from "../Trees/TreesUtils"
 import { PolynomialBasis } from "./PolynomialBasis"
 
 export function solveDeCasteljau(interpolatePoints : Vector3[], controlPoints : Vector3[], subdivisions : number) {
@@ -57,28 +57,30 @@ export function calculateMLSPoint(
   radius : number,
   tree : Tree,
   basis : PolynomialBasis,
-  arrays : Vector3[][],
+  arrays : Vertex[][],
   epsilon : number) {
   const { x, y, z } = gridPoint
   
-  const options = { k: basis.length, radius, justIndices : true }
-  const query = (fp : TreesUtils.FindingPattern) => tree.query(gridPoint, fp, options) as number[]
+  const options = { k: basis.length, radius }
+  const query = (fp : TreesUtils.FindingPattern) => tree.query(gridPoint, fp, options)
 
-  let nearbyPoints : number[]
-  nearbyPoints = query(TreesUtils.FindingPattern.Radius)
+  let nearbyVerts : Vertex []
+  //nearbyPoints = query(TreesUtils.FindingPattern.Radius)
 
-  if (nearbyPoints.length === 0) {
-    return Number.MAX_VALUE  
+  /*if (nearbyPoints.length === 0) {
+    return epsilon
   }
 
   if (nearbyPoints.length < basis.length) {
-    nearbyPoints = query(TreesUtils.FindingPattern.KNearest)
-  }
-  if (nearbyPoints.length < basis.length) {
+    */nearbyVerts = query(TreesUtils.FindingPattern.KNearest)
+  //}
+  if (nearbyVerts.length < basis.length) {
     throw new RangeError("KNearest Picking didnt return (" + basis.length + ") points")
   }
 
-  const maxDistance = Vector3.Distance(gridPoint, arrays[1][nearbyPoints[nearbyPoints.length - 1]])
+  const maxDistance = Vector3.Distance(gridPoint, nearbyVerts[nearbyVerts.length - 1].position)
+  
+  //if (minDistance > radius) return Number.MAX_VALUE
 
   const d = basis.length
   let m = math.zeros(d, d)
@@ -86,11 +88,11 @@ export function calculateMLSPoint(
 
   const implicitFactors = [-epsilon, 0, epsilon]
   for (let j = 0; j < arrays.length; j++) {
-    const points = arrays[j]
+    const vertices = arrays[j]
     const implicitWeight = implicitFactors[j]
     
-    nearbyPoints.forEach(i => {
-      const p = points[i]
+    nearbyVerts.forEach(nv => {
+      const p = vertices[nv.index].position
       const weight = wendland(gridPoint, p, maxDistance)
 
       // add weighted systemMatrix
@@ -107,16 +109,17 @@ export function calculateMLSPoint(
 export function calculateWLSPoint(
   gridPoint : Vector3, 
   wendlandRadius : number, 
-  queryDelegate : (v2: Vector2) => Vector3[],
+  queryDelegate : (v2: Vector2) => Vertex[],
   basis : PolynomialBasis) {
   const {x, z} = gridPoint
-  const nearbyPoints = queryDelegate(new Vector2(x, z))
-  if (nearbyPoints.length <= 1) return null
+  const nearbyVerts = queryDelegate(new Vector2(x, z))
+  if (nearbyVerts.length <= 1) return null
   
   const d = basis.length
   let m = math.zeros(d, d)
   let v = math.zeros(d)
-  nearbyPoints.forEach(point => {
+  nearbyVerts.forEach(nv => {
+    const point = nv.position
     const p = new Vector2(point.x, point.z)
     const f = point.y
 

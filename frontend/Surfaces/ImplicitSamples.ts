@@ -17,23 +17,25 @@ export class ImplicitSamples implements IVisualizable {
 
   constructor(source : PointCloud, grid : Grid3D) {
     const isNearest = (p : Vector3, p2 : Vector3) => {
-      const picked = source.tree.query(p2, TreesUtils.FindingPattern.KNearest, { k : 1 }) as Vector3[]
-      return picked.length === 1 && picked[0].equals(p) 
+      const picked = source.tree.query(p2, TreesUtils.FindingPattern.KNearest, { k : 1 })
+      return picked.length === 1 && picked[0].position.equals(p) 
     }
 
     this.source = source
 
-    const { vertices, normals } = source
     const innerPoints : Vector3[] = []
     const outerPoints : Vector3[] = []
     
     let epsilon = Vector3.Distance(grid.min, grid.max) * .01 * 2
-    vertices.forEach((p, i) => {
+    source.vertices.forEach((v, i) => {
+      const p = v.position
+      const n = v.normal
+      
       let epsilonTooHigh = false
       // outward point p_i + n_i
       let pOut
       do {
-        pOut = p.add(normals[i].scale(epsilon))
+        pOut = p.add(n.scale(epsilon))
         epsilonTooHigh = !isNearest(p, pOut)
         if (epsilonTooHigh) epsilon *= .5        
       } while (epsilonTooHigh)
@@ -42,7 +44,7 @@ export class ImplicitSamples implements IVisualizable {
       // inward point p_i + n_i
       let pIn
       do {
-        pIn = p.subtract(normals[i].scale(epsilon))
+        pIn = p.subtract(n.scale(epsilon))
         epsilonTooHigh = !isNearest(p, pIn)        
         if (epsilonTooHigh) epsilon *= .5
       } while (epsilonTooHigh)
@@ -95,7 +97,8 @@ export class ImplicitSamples implements IVisualizable {
       } else {
         color.g = 1
       }
-      color.toArray(vertexColors, i*4)    
+
+      color.toArray(vertexColors, i*4)  
     })
     
     grid.visualization.setVerticesData(VertexBuffer.ColorKind, vertexColors)

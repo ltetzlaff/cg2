@@ -1,7 +1,8 @@
 import { 
   Vector3, Mesh, InstancedMesh, Color3, StandardMaterial,
-  Scene, VertexBuffer, Material, MeshBuilder 
+  Scene, VertexBuffer, VertexData, Material, MeshBuilder 
 } from "../node_modules/babylonjs/dist/preview release/babylon.module"
+import { Vertex } from "./Trees/TreesUtils"
 
 export interface IVisualizable {
   visualization : InstancedMesh[] | Mesh[] | Mesh
@@ -14,13 +15,13 @@ export interface IVisualizable {
   destroy() : void
 }
 
-export function showVertexNormals(vertices : Vector3[], normals : Vector3[], scene : Scene, color : string, offset : Vector3= new Vector3(0, 0, 0)) {
+export function showVertexNormals(vertices : Vertex[], scene : Scene, color : string, offset : Vector3= new Vector3(0, 0, 0)) {
   const { min, max } = getExtents(vertices)
   const diff = max.subtract(min)
   const length = .05 * Math.max(diff.x, diff.y, diff.z)
-  const lines = normals.map((n, i) => {
-    const v1 = vertices[i]
-    const v2 = v1.add(n.scale(length))
+  const lines = vertices.map((v, i) => {
+    const v1 = v.position
+    const v2 = v1.add(v.normal.scale(length))
     return [ v1.add(offset), v2.add(offset) ]
   })
   const ls = MeshBuilder.CreateLineSystem("lines", { lines, updatable: false }, scene)
@@ -29,33 +30,51 @@ export function showVertexNormals(vertices : Vector3[], normals : Vector3[], sce
 }
 
 export function showMeshsVertexNormals(mesh : Mesh, color : string) {
-  const { positions, normals } = getVertexData(mesh)
-  return showVertexNormals(positions, normals, mesh.getScene(), color, mesh.position)
+  const vertices = getVertices(mesh)
+  return showVertexNormals(vertices, mesh.getScene(), color, mesh.position)
 }
 
-export function getVertexData(mesh : Mesh) {
-  const normalsFlat = mesh.getVerticesData(VertexBuffer.NormalKind)
-  const positionsFlat = mesh.getVerticesData(VertexBuffer.PositionKind)
+export function getVertices(mesh : Mesh) : Vertex[] {
+  const nFlat = mesh.getVerticesData(VertexBuffer.NormalKind)
+  const pFlat = mesh.getVerticesData(VertexBuffer.PositionKind)
 
-  const normals : Vector3[] = []
-  const positions : Vector3[] = []
-  const cp = (src : number[] | Float32Array, i : number) => Vector3.FromArray(src, i)
-  for (let i = 0; i < normalsFlat.length; i += 3) {
-    normals.push(cp(normalsFlat, i))
-    positions.push(cp(positionsFlat, i))
+  const vertices : Vertex[] = []
+  for (let i = 0, j = 0; i < nFlat.length; i += 3, j++) {
+    vertices.push(new Vertex(
+      Vector3.FromArray(pFlat, i), Vector3.FromArray(nFlat, i), j
+    ))
   }
-  return { positions, normals }
+  return vertices
+}
+
+export function getVertexData(vertices : Vertex[]) : VertexData {
+  const unitVector = new Vector3(1, 1, 1)
+  const pFlat = new Float32Array(vertices.length * 3)
+  const nFlat = new Float32Array(vertices.length * 3)
+
+  vertices.forEach((v, i) => {
+    const i3 = i * 3
+    v.position.toArray(pFlat, i3)
+    ;(v.normal ? v.normal : unitVector).toArray(nFlat, i3)
+  })
+
+  const vd = new VertexData()
+  vd.positions = pFlat
+  vd.normals = nFlat
+  vd.uvs = []
+  vd.indices = []
+  return vd
 }
 
 /** Retrieve minimum and maximum values for x,y,z out of
  * @param {Array<Array<Number>[3]>} points
  */
-export function getExtents(points : Vector3[], pad? : boolean) {
+export function getExtents(vertices : Vertex[], pad? : boolean) {
   const max = new Vector3(-Infinity, -Infinity, -Infinity)
   const min = new Vector3( Infinity,  Infinity,  Infinity)
 
-  for (let i = 0, len = points.length; i < len; i++) {
-    const v = points[i]
+  for (let i = 0, len = vertices.length; i < len; i++) {
+    const v = vertices[i].position
     ;["x", "y", "z"].forEach(d => {
       if (v[d] < min[d]) min[d] = v[d]
       if (v[d] > max[d]) max[d] = v[d]

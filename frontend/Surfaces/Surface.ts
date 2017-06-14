@@ -4,7 +4,7 @@ import { Tree } from "../Trees/Tree"
 import { IVisualizable } from "../Utils"
 import { Grid3D } from "./Grid3D"
 import { PointCloud } from "./PointCloud"
-import { TreesUtils } from "../Trees/TreesUtils"
+import { TreesUtils, Vertex } from "../Trees/TreesUtils"
 import { solveDeCasteljau, calculateWLSPoint } from "./SurfaceUtils"
 import { PolynomialBasis } from "./PolynomialBasis"
 
@@ -23,7 +23,7 @@ export class Surface implements IVisualizable {
     const { resolution } = grid
 
     const queryDelegate = (v2: Vector2) => {
-      return tree.query(v2, findingPattern, { k, radius }) as Vector3[]
+      return tree.query(v2, findingPattern, { k, radius })
     }
 
     const defaultNormal = new Vector3(1, 1, 1)
@@ -54,11 +54,11 @@ export class Surface implements IVisualizable {
 
     if (subdivideWithPolynomials) {
       this.pointCloud = new PointCloud(points, "Surface")
-      this.pointCloud.normals = normals
+      this.pointCloud.vertices.forEach((v, i) => v.normal = normals[i])
     } else {
       const tensor = solveDeCasteljau(interpolatePoints, points, subdivisions)
       this.pointCloud = new PointCloud(tensor.points, "BTP Surface")
-      this.pointCloud.normals = tensor.normals
+      this.pointCloud.vertices.forEach((v, i) => v.normal = tensor.normals[i])
     }
   }
 

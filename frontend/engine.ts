@@ -160,7 +160,7 @@ export class App {
 
     sel = "#pVisualizeMCMesh"
     bindOnChangeCheckbox(sel, b => {
-      if (this.mcMesh) this.mcMesh.visualize(b, this.mat.MCMesh, this.scene)
+      if (this.mcMesh) this.mcMesh.visualize(b, this.mat.mcMesh, this.scene)
     })
 
     bindOnChangeFile("#load", fl => {

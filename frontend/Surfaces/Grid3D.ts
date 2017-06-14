@@ -35,11 +35,10 @@ export class Grid3D implements IVisualizable {
     this.gridOptions = gridOptions
 
     const diff = max.subtract(min)
-    this.diagonal = diff.length()
-
     const pad = diff.scale(gridOptions.padding)
     this.min = min.subtract(pad)
     this.max = max.add(pad)
+    this.diagonal = max.subtract(min).length()
     this.resolution = diff
       .scale(1 + 2 * gridOptions.padding)
       .scale(1/gridOptions.subdivisions)

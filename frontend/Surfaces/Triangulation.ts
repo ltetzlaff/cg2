@@ -10,6 +10,15 @@ export const PointsOfCube = [
   [1, 1, 0],
   [1, 1, 1],
   [0, 1, 1]
+  /*
+  [0, 0, 0],
+  [0, 0, 1],
+  [1, 0, 1],
+  [1, 0, 0],
+  [0, 1, 0],
+  [0, 1, 1],
+  [1, 1, 1],
+  [1, 1, 0]*/
 ].map(a => new Vector3(a[0], a[1], a[2]))
 
 export const EdgesOfCube = [

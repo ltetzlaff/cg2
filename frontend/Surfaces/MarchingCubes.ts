@@ -1,7 +1,8 @@
 import { Vector3, Mesh, Scene, Material, IndicesArray, VertexData, MathTools } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
-import { IVisualizable, showVertexNormals } from "../Utils"
+import { IVisualizable, showVertexNormals, getVertexData } from "../Utils"
 import { PointsOfCube, EdgesOfCube, EdgesMask, FacesMask } from "./Triangulation"
 import { ImplicitSamples } from "./ImplicitSamples"
+import { Vertex } from "../Trees/TreesUtils"
 
 export enum MCAlgo {
   MarchingCubes, EnhancedMarchingCubes
@@ -11,17 +12,18 @@ export class MCMesh implements IVisualizable {
   public visualization : Mesh
   public normalVisualization : Mesh
   
-  private vertices : Vector3[]
-  private normals : Vector3[]
+  private vertices : Vertex[]
   private indices : number[]
 
   constructor(implicitSamples : ImplicitSamples) {
+    const defaultVector = new Vector3(-1, -1, -1)
+
     this.vertices = []
-    this.normals = []
     this.indices = []
     
     const { samples } = implicitSamples
     const dim = (Math.pow(samples.length, 1/3) | 0) // third root
+    //console.log("dim:", dim, "samples:", samples.length)
     
     for (let x = 0; x < dim; x++) {
       for (let y = 0; y < dim; y++) {
@@ -34,38 +36,49 @@ export class MCMesh implements IVisualizable {
           // Find Cube Points and Cube Pattern Index       
           let cubePatternIndex = 0 // lookup index for the pattern-bitmask
           const cubePoints = PointsOfCube.map((o, i) => {
+            //console.log("index" + i + ":", index(o))
+            
             const s = samples[index(o)]
-            if (s.implicitValue <= 0) cubePatternIndex |= i ** 2
+            if (s.implicitValue < 0) cubePatternIndex |= (i ** 2)
             return s
           })
 
-          const indexOffset = this.vertices.length || 1 // save this
-
           // Add Vertices
+          const corners : Vector3[] = []          
           for (let i = 0; i < 12; i++) {
-            if (!(EdgesMask[cubePatternIndex] & i ** 2)) continue
+            if (!(EdgesMask[cubePatternIndex] & i ** 2)) {
+              corners.push(defaultVector)
+              continue
+            }
             
             const edge = EdgesOfCube[i]
 
             // Lerp
             const a = cubePoints[edge.x]
             const b = cubePoints[edge.y]
-            const t = MathTools.Clamp(-a.implicitValue/(b.implicitValue - a.implicitValue), 0, 1)
-            //const t = -a.implicitValue/(b.implicitValue - a.implicitValue)
-            console.log(edge.x, edge.y, t)
-            const vertex = Vector3.Lerp(a.position, b.position, t)
-            this.vertices.push(vertex)
+            
+            let vertex : Vector3
+            const divisor = b.implicitValue - a.implicitValue
+            //const t = MathTools.Clamp(-a.implicitValue/divisor, 0, 1)
+            const t = Math.abs(divisor) > .1 ? -a.implicitValue/divisor : 0
+            vertex = Vector3.Lerp(a.position, b.position, t)
+            corners.push(vertex)
           }
 
           // Get Cube's Triangulation Pattern
+          //console.log(cubePatternIndex)
           const cubePattern = FacesMask[cubePatternIndex]
+          const indexOffset = this.vertices.length
 
-          for(let i = 0; i < 12; i++) {
-            let index = cubePattern[i]
-            if (index === -1) break
-            index += indexOffset
-            if (index > this.vertices.length) index %= indexOffset
-            this.indices.push(index)
+          // Loop Triangles in Marching Cube Cell
+          for(let i = 0; i < 12; i += 3) {
+            // Loop Verts in Triangle
+            for (let j = 0; j < 3; j++) {
+              const index = cubePattern[i + j]
+              if (index === -1) break
+              this.indices.push(this.vertices.length)              
+              this.vertices.push(new Vertex(corners[index]))
+            }            
           }
         }
       }
@@ -77,7 +90,7 @@ export class MCMesh implements IVisualizable {
     if (this.normalVisualization) this.normalVisualization.dispose()
     if (!show) return
     
-    const ls = showVertexNormals(this.vertices, this.normals, scene, color)
+    const ls = showVertexNormals(this.vertices, scene, color)
     this.normalVisualization = ls
   }
 
@@ -90,29 +103,9 @@ export class MCMesh implements IVisualizable {
 
     if (!this.visualization) {
       this.visualization = new Mesh("surfaceVisualization", scene)
-      console.log(this.vertices, this.indices)
+      //console.log(this.vertices, this.indices)
 
-      const vertices = this.vertices
-      const normals = this.normals
-      const unitVector = new Vector3(1, 1, 1)
-
-      const positionsFlat : number[] = []
-      const normalsFlat : number[] = []
-      
-      for (let i = 0, j = 0, len = vertices.length; j < len; j++, i+=3) {
-        const p = vertices[j]
-        positionsFlat[i]   = p.x
-        positionsFlat[i+1] = p.y
-        positionsFlat[i+2] = p.z
-        const n = normals[j] || unitVector
-        normalsFlat[i]   = n.x
-        normalsFlat[i+1] = n.y
-        normalsFlat[i+2] = n.z
-      }
-      const vd = new VertexData()
-      vd.positions = positionsFlat
-      vd.normals = normalsFlat
-      vd.uvs = []
+      const vd = getVertexData(this.vertices)
       vd.indices = this.indices
       vd.applyToMesh(this.visualization)
     }

@@ -1,32 +1,29 @@
 import { Vector3, Mesh, Color3, Scene, Material, IndicesArray, VertexData } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
-import { IVisualizable, showVertexNormals, getVertexData } from "../Utils"
+import { IVisualizable, showVertexNormals, getVertices, getVertexData } from "../Utils"
 import { Grid3D } from "./Grid3D"
 import { Octree, OctreeOptions } from "../Trees/Octree"
+import { Vertex } from "../Trees/TreesUtils"
 
 export class PointCloud implements IVisualizable {
   public visualization : Mesh
   public normalVisualization : Mesh
-  public vertices : Vector3[]
-  public normals : Vector3[]
+  public vertices : Vertex[]
   public name : string
 
   public tree : Octree
 
   constructor(data : Mesh | Vector3[], name? : string, scale = 1) {
     this.name = name || "PointCloud"
-    this.normals = []
-
+    
     if (data instanceof Mesh) {
-      const { positions, normals } = getVertexData(data)
-      this.vertices = positions
-      this.normals = normals
+      this.vertices = getVertices(data)
     } else {
       // Assert Vector3[]
-      this.vertices = data
+      this.vertices = data.map(p => new Vertex(p))
     }
 
     if (scale !== 1) {
-      this.vertices.forEach(v => v.scaleInPlace(scale))
+      this.vertices.forEach(v => v.position.scaleInPlace(scale))
     }
 
     const opts = new OctreeOptions(60, 5)    
@@ -37,7 +34,7 @@ export class PointCloud implements IVisualizable {
     if (this.normalVisualization) this.normalVisualization.dispose()
     if (!show) return
     
-    const ls = showVertexNormals(this.vertices, this.normals, scene, color)
+    const ls = showVertexNormals(this.vertices, scene, color)
     this.normalVisualization = ls
   }
 
@@ -50,29 +47,7 @@ export class PointCloud implements IVisualizable {
 
     if (!this.visualization) {
       this.visualization = new Mesh("surfaceVisualization", scene)
-      
-      const vertices = this.vertices
-      const normals = this.normals
-      const unitVector = new Vector3(1, 1, 1)
-
-      const positionsFlat : number[] = []
-      const normalsFlat : number[] = []
-      
-      for (let i = 0, j = 0, len = vertices.length; j < len; j++, i+=3) {
-        const p = vertices[j]
-        positionsFlat[i]   = p.x
-        positionsFlat[i+1] = p.y
-        positionsFlat[i+2] = p.z
-        const n = normals[j] || unitVector
-        normalsFlat[i]   = n.x
-        normalsFlat[i+1] = n.y
-        normalsFlat[i+2] = n.z
-      }
-      const vd = new VertexData()
-      vd.positions = positionsFlat
-      vd.normals = normalsFlat
-      vd.uvs = []
-      vd.indices = []
+      const vd = getVertexData(this.vertices)
       vd.applyToMesh(this.visualization)
     }
 
@@ -84,11 +59,10 @@ export class PointCloud implements IVisualizable {
     if (this.normalVisualization) this.normalVisualization.dispose()
   }
 
-  public toTriangleMesh(Grid3D : Grid3D, mesh : Mesh) : Mesh {
+  public toTriangleMesh(grid : Grid3D, mesh : Mesh) : Mesh {
     // Indices
     const indices : IndicesArray = []
-    
-    const { subdivisions } = Grid3D.gridOptions
+    const { subdivisions } = grid.gridOptions
     
     const pointsPerColumn = subdivisions + 1
     for (let x = 0; x <= subdivisions - 1; x++) {
@@ -104,32 +78,9 @@ export class PointCloud implements IVisualizable {
       }
     }
 
-    // Vertices + normals
-    const vertices = this.vertices
-    const normals = this.normals
-    const len = vertices.length
-
-    const positionsFlat = new Float32Array(len * 3)
-    const normalsFlat = new Float32Array(len * 3)
-
-    for (let i = 0, j = 0; j < len; j++, i += 3) {
-      //points[i].toArray(vertices, j)
-      const p = vertices[j]
-      const n = normals[j]
-      positionsFlat[i]   = p.x
-      positionsFlat[i+1] = p.y
-      positionsFlat[i+2] = p.z
-      normalsFlat[i]   = n.x
-      normalsFlat[i+1] = n.y
-      normalsFlat[i+2] = n.z
-    }
-
-    // Merge
-    const vertexData = new VertexData()
-    vertexData.positions = positionsFlat
-    vertexData.indices = indices
-    vertexData.normals = normalsFlat
-    vertexData.applyToMesh(mesh)
+    const vd = getVertexData(this.vertices)
+    vd.indices = indices
+    vd.applyToMesh(mesh)
     return
   }
 }

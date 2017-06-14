@@ -1,5 +1,5 @@
 import { Vector3, Vector2, Ray, Mesh, MeshBuilder, BoundingBox, Material, Scene } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
-import { TreesUtils } from "./TreesUtils"
+import { TreesUtils, Vertex } from "./TreesUtils"
 import { Tree } from "./Tree"
 import { IVisualizable, getExtents } from "../Utils"
 
@@ -16,7 +16,7 @@ export class OctreeOptions {
 export class Octant extends TreesUtils.Box implements TreesUtils.IQueryable {
   private static splitsInto = 8
   public children : Octant[]
-  public points : Vector3[]
+  public points : Vertex[]
   public level : number
   private options : OctreeOptions
 
@@ -75,7 +75,7 @@ export class Octant extends TreesUtils.Box implements TreesUtils.IQueryable {
           const octant = new Octant(min, half, this.level + 1, this.options)
           this.children.push(octant)
           this.points = this.points.filter(p => {
-            if (octant.contains(p)) {
+            if (octant.contains(p.position)) {
               octant.points.push(p)
               return false
             }
@@ -91,7 +91,7 @@ export class Octant extends TreesUtils.Box implements TreesUtils.IQueryable {
 export class Octree extends Octant implements Tree, IVisualizable {
   public visualization : Mesh[]
 
-  constructor(vertices : Vector3[], options : OctreeOptions) {
+  constructor(vertices : Vertex[], options : OctreeOptions) {
     let { min, max } = getExtents(vertices, true)
     super(min, max.subtract(min), 0, options)
 
@@ -125,7 +125,7 @@ export class Octree extends Octant implements Tree, IVisualizable {
     this.visualize(false, null, null)
   }
 
-  pick(ray : Ray, pattern : TreesUtils.FindingPattern, options : any) : Vector3[] {
+  pick(ray : Ray, pattern : TreesUtils.FindingPattern, options : any) : Vertex[] {
     //console.time("  - finding Start")
     const hitOctants = this.findIntersecting(ray)
     if (!hitOctants) return [] // no octant hit
@@ -141,18 +141,18 @@ export class Octree extends Octant implements Tree, IVisualizable {
     let startingPoint : Vector3
     startingPointOctants.some(octant => {
       const foundInOctant = octant.points.find(p => {
-        return ray.intersectsBoxMinMax(p.subtract(epsilon),p.add(epsilon))
+        return ray.intersectsBoxMinMax(p.position.subtract(epsilon), p.position.add(epsilon))
       })
       if (!foundInOctant) return false
-      startingPoint = foundInOctant
+      startingPoint = foundInOctant.position
       return true
     })
     //console.timeEnd("  - finding Start")
     if (!startingPoint) return [] // no direct box hit
-    return this.query(startingPoint, pattern, options) as Vector3[]
+    return this.query(startingPoint, pattern, options)
   }
 
-  query(startingPoint : Vector3 | Vector2, pattern : TreesUtils.FindingPattern, options : any) : Vector3[] {
+  query(startingPoint : Vector3 | Vector2, pattern : TreesUtils.FindingPattern, options : any) : Vertex[] {
     if (pattern === TreesUtils.FindingPattern.KNearest) {
       options.radius = Number.MAX_VALUE // knearest just needs a point
     }
@@ -169,24 +169,24 @@ export class Octree extends Octant implements Tree, IVisualizable {
     intersectedOctants = this.findIntersecting(volume)
 
     //console.time("  - finding Query")
-    let candidates : Vector3[] = []
+    let candidates : Vertex[] = []
     switch (pattern) {
       case TreesUtils.FindingPattern.KNearest:
         intersectedOctants.forEach(octant => {
           candidates.push(...octant.points)            
         })
         candidates = candidates
-          .sort((a, b) => volume.distanceToCenter(a) - volume.distanceToCenter(b))
+          .sort((a, b) => volume.distanceToCenter(a.position) - volume.distanceToCenter(b.position))
           .slice(0, options.k)
         break
       case TreesUtils.FindingPattern.Radius:
         intersectedOctants.forEach(octant => {
           octant.points.forEach(p => {
-            if (volume.contains(p)) candidates.push(p)
+            if (volume.contains(p.position)) candidates.push(p)
           })
         })
         candidates = candidates
-          .sort((a, b) => volume.distanceToCenter(a) - volume.distanceToCenter(b))          
+          .sort((a, b) => volume.distanceToCenter(a.position) - volume.distanceToCenter(b.position))          
         break
     }
     //console.timeEnd("  - finding Query")
