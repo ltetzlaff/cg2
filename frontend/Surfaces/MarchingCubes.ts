@@ -59,8 +59,8 @@ export class MCMesh implements IVisualizable {
             
             let vertex : Vector3
             const divisor = b.implicitValue - a.implicitValue
-            //const t = MathTools.Clamp(-a.implicitValue/divisor, 0, 1)
-            const t = Math.abs(divisor) > .1 ? -a.implicitValue/divisor : 0
+            const t = MathTools.Clamp(-a.implicitValue/divisor, 0, 1)
+            //const t = Math.abs(divisor) > .1 ? -a.implicitValue/divisor : 0
             vertex = Vector3.Lerp(a.position, b.position, t)
             corners.push(vertex)
           }

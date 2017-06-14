@@ -57,7 +57,7 @@ export function calculateMLSPoint(
   radius : number,
   tree : Tree,
   basis : PolynomialBasis,
-  arrays : Vertex[][],
+  vertexArrays : Vertex[][],
   epsilon : number) {
   const { x, y, z } = gridPoint
   
@@ -65,30 +65,30 @@ export function calculateMLSPoint(
   const query = (fp : TreesUtils.FindingPattern) => tree.query(gridPoint, fp, options)
 
   let nearbyVerts : Vertex []
-  //nearbyPoints = query(TreesUtils.FindingPattern.Radius)
+  nearbyVerts = query(TreesUtils.FindingPattern.Radius)
 
-  /*if (nearbyPoints.length === 0) {
+  if (nearbyVerts.length === 0) {
     return epsilon
   }
 
-  if (nearbyPoints.length < basis.length) {
-    */nearbyVerts = query(TreesUtils.FindingPattern.KNearest)
-  //}
+  if (nearbyVerts.length < basis.length) {
+    nearbyVerts = query(TreesUtils.FindingPattern.KNearest)
+  }
   if (nearbyVerts.length < basis.length) {
     throw new RangeError("KNearest Picking didnt return (" + basis.length + ") points")
   }
 
   const maxDistance = Vector3.Distance(gridPoint, nearbyVerts[nearbyVerts.length - 1].position)
-  
-  //if (minDistance > radius) return Number.MAX_VALUE
+  const minDistance = Vector3.Distance(gridPoint, nearbyVerts[0].position)
+  if (minDistance > radius) return Number.MAX_VALUE
 
   const d = basis.length
   let m = math.zeros(d, d)
   let v = math.zeros(d)
 
   const implicitFactors = [-epsilon, 0, epsilon]
-  for (let j = 0; j < arrays.length; j++) {
-    const vertices = arrays[j]
+  for (let j = 0; j < vertexArrays.length; j++) {
+    const vertices = vertexArrays[j]
     const implicitWeight = implicitFactors[j]
     
     nearbyVerts.forEach(nv => {
