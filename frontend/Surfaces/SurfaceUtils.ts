@@ -68,7 +68,7 @@ export function calculateMLSPoint(
   nearbyVerts = query(TreesUtils.FindingPattern.Radius)
 
   if (nearbyVerts.length === 0) {
-    return epsilon
+    return Number.MAX_VALUE
   }
 
   if (nearbyVerts.length < basis.length) {

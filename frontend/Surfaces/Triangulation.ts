@@ -3,22 +3,13 @@ import { Vector3, Vector2 } from "../../node_modules/babylonjs/dist/preview rele
 
 export const PointsOfCube = [
   [0, 0, 0],
-  [1, 0, 0],
-  [1, 0, 1],
-  [0, 0, 1],
-  [0, 1, 0],
-  [1, 1, 0],
-  [1, 1, 1],
-  [0, 1, 1]
-  /*
-  [0, 0, 0],
   [0, 0, 1],
   [1, 0, 1],
   [1, 0, 0],
   [0, 1, 0],
   [0, 1, 1],
   [1, 1, 1],
-  [1, 1, 0]*/
+  [1, 1, 0]
 ].map(a => new Vector3(a[0], a[1], a[2]))
 
 export const EdgesOfCube = [

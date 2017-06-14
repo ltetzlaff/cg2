@@ -228,7 +228,7 @@ export class App {
 
     if (!this.gridOptions.buildMCMesh) return
 
-    this.mcMesh = new MCMesh(this.implicitSamples)
+    this.mcMesh = new MCMesh(this.implicitSamples, this.grid)
     this.mcMesh.visualize(getCheckbox($("#pVisualizeMCMesh")), this.mat.mcMesh, this.scene)
   }
 
