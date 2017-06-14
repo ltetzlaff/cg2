@@ -41,14 +41,14 @@ export class MCMesh implements IVisualizable {
         const i = index(new Vector3(x, y, z), o)
         const s = samples[i]
         //console.log(s.position, o, x, y, z, i, samples.length)
-        if (s.implicitValue < 0) cubePatternIndex |= (n ** 2)
+        if (s.implicitValue < 0) cubePatternIndex |= (2 ** n)
         return s
       })
 
       // Add Vertices
       const corners : Vector3[] = []          
       for (let i = 0; i < 12; i++) {
-        if (!(EdgesMask[cubePatternIndex] & i ** 2)) {
+        if (!(EdgesMask[cubePatternIndex] & 2 ** i)) {
           corners.push(defaultVector)
           continue
         }
