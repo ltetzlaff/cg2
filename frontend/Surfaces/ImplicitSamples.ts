@@ -53,8 +53,8 @@ export class ImplicitSamples implements IVisualizable {
     
     this.samples = []
     this.epsilon = epsilon
-    this.inner = new PointCloud(innerPoints)
-    this.outer = new PointCloud(outerPoints)
+    this.inner = new PointCloud(innerPoints, "Inner", 1, false)
+    this.outer = new PointCloud(outerPoints, "Outer", 1, false)
   }
 
   sample(grid : Grid3D) : void {

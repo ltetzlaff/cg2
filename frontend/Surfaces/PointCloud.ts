@@ -12,7 +12,7 @@ export class PointCloud implements IVisualizable {
 
   public tree : Octree
 
-  constructor(data : Mesh | Vector3[], name? : string, scale = 1) {
+  constructor(data : Mesh | Vector3[], name? : string, scale = 1, buildTree = true) {
     this.name = name || "PointCloud"
     
     if (data instanceof Mesh) {
@@ -27,7 +27,10 @@ export class PointCloud implements IVisualizable {
     }
 
     const opts = new OctreeOptions(60, 5)    
-    this.tree = new Octree(this.vertices, opts)
+    
+    if (buildTree) {
+      this.tree = new Octree(this.vertices, opts)
+    }
   }
 
   public visualizeNormals(show : boolean, color : string, scene : Scene) {
