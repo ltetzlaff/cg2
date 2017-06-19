@@ -1,0 +1,16 @@
+extends layout.pug
+
+block content
+  #main
+    canvas#c
+  #details
+    section
+      h3 Source Mesh
+      +checkbox("pVisualizeSourceMesh", "Draw Source Mesh", true)
+      +checkbox("pVisualizeVertexNormals", "Draw Vertex Normals", true)
+            
+    section
+      h3 Load
+      +file("load", "Load Model")
+      +button("load", "kitten_050", "attachment")
+      +button("load", "kitten_500", "attachment")

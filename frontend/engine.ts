@@ -1,18 +1,10 @@
 import { 
-  Vector3, Color3, Mesh, AbstractMesh, 
+  Vector3, Mesh, AbstractMesh, 
   ArcRotateCamera, PointLight, Light, Scene, Material,
   Engine, AssetsManager, SceneLoader
 } from "../node_modules/babylonjs/dist/preview release/babylon.module"
-import { TreesUtils } from "./Trees/TreesUtils"
-import { Tree } from "./Trees/Tree"
-import { getExtents, StdMaterial, PointCloudMaterial, WireFrameMaterial } from "./Utils"
-import { Octree, OctreeOptions } from "./Trees/Octree"
-import { PointCloud } from "./Surfaces/PointCloud"
-import { Grid3D, GridOptions } from "./Surfaces/Grid3D"
-import { Surface } from "./Surfaces/Surface"
-import { ImplicitSamples } from "./Surfaces/ImplicitSamples"
-import { MCMesh, MCAlgo } from "./Surfaces/MarchingCubes"
-import "./OFFFileLoader"
+import { TriangleMesh } from "./MeshSmoothing/TriangleMesh"
+import { StdMaterial, PointCloudMaterial, WireFrameMaterial } from "./Utils"
 
 export class App {
   private canvas : HTMLCanvasElement
@@ -23,13 +15,8 @@ export class App {
   private lightPivot : Mesh
   private cam : ArcRotateCamera
 
-  private pointCloud : PointCloud
   private mat : any  
-  private gridOptions : GridOptions
-  private grid : Grid3D
-  private surface : Surface
-  private implicitSamples : ImplicitSamples
-  private mcMesh : MCMesh
+  private sourceMesh : TriangleMesh
 
   constructor(canvas : HTMLCanvasElement) {
     this.canvas = canvas
@@ -52,14 +39,8 @@ export class App {
     this.light.parent = this.lightPivot
 
     this.mat = {
-      points: new PointCloudMaterial("red", s),
-      tree: new WireFrameMaterial("yellow", s),
-      grid: new PointCloudMaterial("white", s, false, 6),
-      implicitSamples: new PointCloudMaterial("green", s),
-      mcMesh: new StdMaterial("purple", s)
+      sourceMesh: new StdMaterial("purple", s)
     }
-    
-    this.gridOptions = new GridOptions()
   }
 
   run() : void {
@@ -72,99 +53,28 @@ export class App {
   setupUIBindings() {
     $$(".load").forEach((el : Element) => {
       el.addEventListener("click", () => {
-        this.load(el.getAttribute("value") + ".off", true)
+        this.load(el.getAttribute("value") + ".obj", true)
       })
     })
 
     let sel = ""
-    const go = this.gridOptions
-    go.findingPattern = TreesUtils.FindingPattern.Radius
-
-    // Point Cloud
-    sel = "#pVisualizePointCloud"
+    
+    sel = "#pVisualizeSourceMesh"
     bindOnChangeCheckbox(sel, b => {
-      if (this.pointCloud) this.pointCloud.visualize(b, this.mat.points, this.scene)
+      if (this.sourceMesh) this.sourceMesh.visualize(b, this.mat.sourceMesh, this.scene)
     })
 
     sel = "#pVisualizeVertexNormals"
     bindOnChangeCheckbox(sel, b => {
-      if (this.pointCloud) this.pointCloud.visualizeNormals(b, "white", this.scene)
-    })
-
-    sel = "#pVisualizeTree"
-    bindOnChangeCheckbox(sel, b => {
-      if (this.pointCloud) this.pointCloud.tree.visualize(b, this.mat.tree, this.scene)
-    })
-
-    // Grid3D
-    sel = "#pSubdivisions"
-    go.subdivisions = getFloat($(sel))
-    bindOnChangeNumeric(sel, n => {
-      go.subdivisions = n
-      this.buildGrid()
-    })
-
-    sel = "#pBBPadding"
-    go.padding = getFloat($(sel))
-    bindOnChangeNumeric(sel, n => {
-      go.padding = n
-      this.buildGrid()
-    })
-
-    sel = "#pVisualizeGrid"
-    bindOnChangeCheckbox(sel, b => {
-      if (this.grid) this.grid.visualize(b, this.mat.Grid3D, this.scene)
-    })
-
-    // Implicit Sampling
-    sel = "#pRadius"
-    go.radius = getFloat($(sel))
-    bindOnChangeNumeric(sel, n => {
-      go.radius = n
-      this.runImplicitSampling()
-    })
-    
-    sel = "poly"
-    go.polynomialBasis = getRadioValue(sel)
-    bindOnChangeRadio(sel, s => {
-      go.polynomialBasis = s
-      this.runImplicitSampling()
-    })
-
-    sel = "#pRunImplicitSampling"
-    go.runImplicitSampling= getCheckbox($(sel))
-    bindOnChangeCheckbox(sel, b => {
-      go.runImplicitSampling = b
-      this.runImplicitSampling()
-    })
-
-    sel = "#pVisualizeImplicit"
-    bindOnChangeCheckbox(sel, b => {
-      if (this.implicitSamples) this.implicitSamples.visualize(b, this.mat.implicitSamples, this.scene)
-    })
-
-    // Marching Cubes
-    sel = "mcAlgo"
-    go.mcAlgo = MCAlgo[getRadioValue(sel)]
-    bindOnChangeRadio(sel, s => {
-      go.mcAlgo = MCAlgo[s]
-      this.buildMCMesh()
-    })
-
-    sel = "#pBuildMCMesh"
-    go.buildMCMesh = getCheckbox($(sel))
-    bindOnChangeCheckbox(sel, b => {
-      go.buildMCMesh = b
-      this.buildMCMesh()
-    })
-
-    sel = "#pVisualizeMCMesh"
-    bindOnChangeCheckbox(sel, b => {
-      if (this.mcMesh) this.mcMesh.visualize(b, this.mat.mcMesh, this.scene)
+      if (this.sourceMesh) this.sourceMesh.visualizeNormals(b, "white", this.scene)
     })
 
     bindOnChangeFile("#load", fl => {
       this.load(fl[0].name, true)
+      if (this.sourceMesh) {
+        this.sourceMesh.visualize(getCheckbox($("#pVisualizeSourceMesh")), this.mat.sourceMesh, this.scene)
+        this.sourceMesh.visualizeNormals(getCheckbox($("#pVisualizeVertexNormals")), "white", this.scene)
+      }
     })
 
     window.addEventListener("keydown", ev => {
@@ -191,63 +101,15 @@ export class App {
     })
   }
 
-  buildGrid() {
-    if (this.grid) this.grid.destroy()
-
-    if (!this.gridOptions.buildGrid) return
-    if (!this.pointCloud || this.pointCloud.vertices.length === 0) return
-
-    const { min, max } = getExtents(this.pointCloud.vertices)
-    console.log(max.subtract(min))
-
-    console.time("-- built Grid3D in:")
-    this.grid = new Grid3D(min, max, this.gridOptions)
-    console.timeEnd("-- built Grid3D in:")
-
-    this.grid.visualize(getCheckbox($("#pVisualizeGrid")), this.mat.grid, this.scene)
-
-    this.runImplicitSampling()
-  }
-
-  runImplicitSampling() {
-    if (this.implicitSamples) this.implicitSamples.destroy()
-
-    if (!this.gridOptions.runImplicitSampling) return
-    if (!(this.grid && this.pointCloud)) return
-
-    this.implicitSamples = new ImplicitSamples(this.pointCloud, this.grid)
-    this.implicitSamples.sample(this.grid)
-
-    this.implicitSamples.visualize(getCheckbox($("#pVisualizeImplicit")), this.mat.implicitSamples, this.scene)
-
-    this.buildMCMesh()
-  }
-
-  buildMCMesh() {
-    if (this.mcMesh) this.mcMesh.destroy()
-
-    if (!this.gridOptions.buildMCMesh) return
-
-    this.mcMesh = new MCMesh(this.implicitSamples, this.grid)
-    this.mcMesh.visualize(getCheckbox($("#pVisualizeMCMesh")), this.mat.mcMesh, this.scene)
-  }
-
   load(file : string, asPointCloud : boolean = false) : void {
     SceneLoader.ImportMesh(file, "/models/", file, this.scene, (meshes : AbstractMesh[]) => {
       // Remove old meshes
       //this.scene.meshes.forEach(m => m.dispose())
       if (this.scene.meshes.length) this.scene.meshes = []
 
-      if (asPointCloud) {
-        const scale = file === "cat.off" ? .01 : 1
-        this.pointCloud = new PointCloud(meshes[0] as Mesh, file, scale)
-        this.pointCloud.visualize(getCheckbox($("#pVisualizePointCloud")), this.mat.points, this.scene)
-        this.pointCloud.visualizeNormals(getCheckbox($("#pVisualizeVertexNormals")), "white", this.scene)
-        this.buildGrid()
-      } else {
-        meshes[0].material = this.mat.points
-        this.scene.meshes.push(meshes[0])
-      }
+      meshes[0].material = this.mat.sourceMesh
+      this.scene.meshes.push(meshes[0])
+      this.sourceMesh = meshes[0] as TriangleMesh
     })
   }
 }
