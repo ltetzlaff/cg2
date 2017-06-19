@@ -787,11 +787,13 @@ export class OBJFileLoader implements ISceneLoaderPlugin {
 
         //Create a Mesh list
         var babylonMeshesArray: Array<Mesh> = []; //The mesh for babylon
-        var materialToUse = [];
+        var materialToUse : string[] = [];
 
         //Set data for each mesh
         for (var j = 0; j < meshesFromObj.length; j++) {
             //check meshesNames (stlFileLoader)
+            /* 
+            LT: commenting this out because it sort of breaks my use case
             if (meshesNames && meshesFromObj[j].name) {
                 if (meshesNames instanceof Array) {
                     if (meshesNames.indexOf(meshesFromObj[j].name) == -1) {
@@ -804,7 +806,7 @@ export class OBJFileLoader implements ISceneLoaderPlugin {
                     }
                 }
             }
-            
+            */
 
             //Get the current mesh
             //Set the data with VertexBuffer for each mesh
