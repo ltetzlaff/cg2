@@ -5,6 +5,7 @@ import {
 } from "../node_modules/babylonjs/dist/preview release/babylon.module"
 import { TriangleMesh } from "./MeshSmoothing/TriangleMesh"
 import { StdMaterial, PointCloudMaterial, WireFrameMaterial } from "./Utils"
+import "./OBJFileLoader"
 
 export class App {
   private canvas : HTMLCanvasElement
@@ -71,10 +72,6 @@ export class App {
 
     bindOnChangeFile("#load", fl => {
       this.load(fl[0].name, true)
-      if (this.sourceMesh) {
-        this.sourceMesh.visualize(getCheckbox($("#pVisualizeSourceMesh")), this.mat.sourceMesh, this.scene)
-        this.sourceMesh.visualizeNormals(getCheckbox($("#pVisualizeVertexNormals")), "white", this.scene)
-      }
     })
 
     window.addEventListener("keydown", ev => {
@@ -109,7 +106,13 @@ export class App {
 
       meshes[0].material = this.mat.sourceMesh
       this.scene.meshes.push(meshes[0])
-      this.sourceMesh = meshes[0] as TriangleMesh
+      this.sourceMesh = new TriangleMesh(meshes[0] as Mesh)
+      
+      if (this.sourceMesh) {
+        this.sourceMesh.visualize(getCheckbox($("#pVisualizeSourceMesh")), this.mat.sourceMesh, this.scene)
+        this.sourceMesh.visualizeNormals(getCheckbox($("#pVisualizeVertexNormals")), "white", this.scene)
+        this.sourceMesh.visualization.convertToFlatShadedMesh()
+      }
     })
   }
 }
