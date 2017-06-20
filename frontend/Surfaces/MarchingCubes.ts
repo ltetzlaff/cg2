@@ -1,8 +1,7 @@
 import { Vector3, Mesh, Scene, Material, IndicesArray, VertexData, MathTools } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
-import { IVisualizable, showVertexNormals, getVertexData } from "../Utils"
+import { Vertex, IVisualizable, showVertexNormals, getVertexData } from "../Utils"
 import { PointsOfCube, EdgesOfCube, EdgesMask, FacesMask } from "./Triangulation"
 import { ImplicitSamples } from "./ImplicitSamples"
-import { Vertex } from "../Trees/TreesUtils"
 import { Grid3D } from "./Grid3D"
 
 export enum MCAlgo {

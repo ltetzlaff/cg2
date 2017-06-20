@@ -1,8 +1,7 @@
 import { Vector3, Mesh, Color3, Scene, Material, IndicesArray, VertexData } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
-import { IVisualizable, showVertexNormals, getVertices, getVertexData } from "../Utils"
+import { Vertex, IVisualizable, showVertexNormals, getVertices, getVertexData } from "../Utils"
 import { Grid3D } from "./Grid3D"
 import { Octree, OctreeOptions } from "../Trees/Octree"
-import { Vertex } from "../Trees/TreesUtils"
 
 export class PointCloud implements IVisualizable {
   public visualization : Mesh

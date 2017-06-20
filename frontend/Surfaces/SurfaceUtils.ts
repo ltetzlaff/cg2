@@ -1,7 +1,7 @@
 import { Vector3, Vector2 } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 import * as math from "mathjs"
 import { Tree } from "../Trees/Tree"
-import { TreesUtils, Vertex } from "../Trees/TreesUtils"
+import { Vertex, FindingPattern } from "../Utils"
 import { PolynomialBasis } from "./PolynomialBasis"
 
 export function solveDeCasteljau(interpolatePoints : Vector3[], controlPoints : Vector3[], subdivisions : number) {
@@ -62,17 +62,17 @@ export function calculateMLSPoint(
   const { x, y, z } = gridPoint
   
   const options = { k: basis.length, radius }
-  const query = (fp : TreesUtils.FindingPattern) => tree.query(gridPoint, fp, options)
+  const query = (fp : FindingPattern) => tree.query(gridPoint, fp, options)
 
   let nearbyVerts : Vertex []
-  nearbyVerts = query(TreesUtils.FindingPattern.Radius)
+  nearbyVerts = query(FindingPattern.Radius)
 
   if (nearbyVerts.length === 0) {
     return Number.MAX_VALUE
   }
 
   if (nearbyVerts.length < basis.length) {
-    nearbyVerts = query(TreesUtils.FindingPattern.KNearest)
+    nearbyVerts = query(FindingPattern.KNearest)
   }
   if (nearbyVerts.length < basis.length) {
     throw new RangeError("KNearest Picking didnt return (" + basis.length + ") points")

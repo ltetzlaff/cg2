@@ -1,10 +1,9 @@
 import { Vector3, Vector2, Mesh, MathTools, Scene, Material } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 import * as math from "mathjs"
 import { Tree } from "../Trees/Tree"
-import { IVisualizable } from "../Utils"
+import { Vertex, IVisualizable } from "../Utils"
 import { Grid3D } from "./Grid3D"
 import { PointCloud } from "./PointCloud"
-import { TreesUtils, Vertex } from "../Trees/TreesUtils"
 import { solveDeCasteljau, calculateWLSPoint } from "./SurfaceUtils"
 import { PolynomialBasis } from "./PolynomialBasis"
 

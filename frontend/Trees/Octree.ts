@@ -1,7 +1,7 @@
-import { Vector3, Vector2, Ray, Mesh, MeshBuilder, BoundingBox, Material, Scene } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
-import { TreesUtils, Vertex } from "./TreesUtils"
-import { Tree } from "./Tree"
-import { IVisualizable, getExtents } from "../Utils"
+import { Vector3, Vector2, Ray, Mesh, MeshBuilder, Material, Scene } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
+import { Box, intersects, getRadialBoundingVolume } from "./BoundingVolumes"
+import { Tree, IQueryable } from "./Tree"
+import { Vertex, FindingPattern, IVisualizable, getExtents } from "../Utils"
 
 export class OctreeOptions {
   public bucketSize : number
@@ -13,7 +13,7 @@ export class OctreeOptions {
   }
 }
 
-export class Octant extends TreesUtils.Box implements TreesUtils.IQueryable {
+export class Octant extends Box implements IQueryable {
   private static splitsInto = 8
   public children : Octant[]
   public points : Vertex[]
@@ -29,26 +29,9 @@ export class Octant extends TreesUtils.Box implements TreesUtils.IQueryable {
   }
 
   findIntersecting(x : any) : Octant[] {
-    let b = false
-    if (x instanceof Ray) {
-      b = (x as Ray).intersectsBoxMinMax(this.min, this.max)
-    } else if (x instanceof TreesUtils.Sphere) {
-      const s = x as TreesUtils.Sphere
-      b = BoundingBox.IntersectsSphere(this.min, this.max, s.center, s.radius)
-    } else if (x instanceof TreesUtils.Cylinder) {
-      const c = x as TreesUtils.Cylinder
-      b = c.intersectsBoxMinMax(this.min, this.max)
-    } else if (x instanceof TreesUtils.Tube) {
-      const t = x as TreesUtils.Tube
-      b = TreesUtils.rectInCircle(this.min, this.max, t.center.x, t.center.y, t.radius)
-      //b = t.intersectsBoxMinMax(this.min, this.max)
-    } else {
-      throw new TypeError("Cannot find Intersection with type: " + x.constructor.name + JSON.stringify(x))
-    }
-
     const ret : Octant[] = []
 
-    if (b) {
+    if (intersects(x, this.min, this.max)) {
       if (this.children.length === 0) {
         ret.push(this)
       } else {
@@ -125,7 +108,7 @@ export class Octree extends Octant implements Tree, IVisualizable {
     this.visualize(false, null, null)
   }
 
-  pick(ray : Ray, pattern : TreesUtils.FindingPattern, options : any) : Vertex[] {
+  pick(ray : Ray, pattern : FindingPattern, options : any) : Vertex[] {
     //console.time("  - finding Start")
     const hitOctants = this.findIntersecting(ray)
     if (!hitOctants) return [] // no octant hit
@@ -152,26 +135,19 @@ export class Octree extends Octant implements Tree, IVisualizable {
     return this.query(startingPoint, pattern, options)
   }
 
-  query(startingPoint : Vector3 | Vector2, pattern : TreesUtils.FindingPattern, options : any) : Vertex[] {
-    if (pattern === TreesUtils.FindingPattern.KNearest) {
+  query(startingPoint : Vector3 | Vector2, pattern : FindingPattern, options : any) : Vertex[] {
+    if (pattern === FindingPattern.KNearest) {
       options.radius = Number.MAX_VALUE // knearest just needs a point
     }
 
     let intersectedOctants : Octant[] = []
-    let volume : TreesUtils.IVolume
-    if (startingPoint instanceof Vector3) {
-      // classic point query
-      volume = new TreesUtils.Sphere(startingPoint, options.radius)
-    } else if (startingPoint instanceof Vector2) {
-      // cylindrical query
-      volume = new TreesUtils.Tube(startingPoint, options.radius)
-    }
+    const volume = getRadialBoundingVolume(startingPoint, options.radius)
     intersectedOctants = this.findIntersecting(volume)
 
     //console.time("  - finding Query")
     let candidates : Vertex[] = []
     switch (pattern) {
-      case TreesUtils.FindingPattern.KNearest:
+      case FindingPattern.KNearest:
         intersectedOctants.forEach(octant => {
           candidates.push(...octant.points)            
         })
@@ -179,7 +155,7 @@ export class Octree extends Octant implements Tree, IVisualizable {
           .sort((a, b) => volume.distanceToCenter(a.position) - volume.distanceToCenter(b.position))
           .slice(0, options.k)
         break
-      case TreesUtils.FindingPattern.Radius:
+      case FindingPattern.Radius:
         intersectedOctants.forEach(octant => {
           octant.points.forEach(p => {
             if (volume.contains(p.position)) candidates.push(p)

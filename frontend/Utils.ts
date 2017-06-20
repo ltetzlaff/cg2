@@ -2,7 +2,20 @@ import {
   Vector3, Mesh, InstancedMesh, Color3, StandardMaterial,
   Scene, VertexBuffer, VertexData, Material, MeshBuilder 
 } from "../node_modules/babylonjs/dist/preview release/babylon.module"
-import { Vertex } from "./Trees/TreesUtils"
+
+export enum FindingPattern { KNearest, Radius }
+
+export class Vertex {
+  public position : Vector3
+  public normal : Vector3
+  public index : number
+
+  constructor(position : Vector3, normal? : Vector3, index? : number) {
+    this.position = position
+    this.normal = normal
+    this.index = index
+  }
+}
 
 export interface IVisualizable {
   visualization : InstancedMesh[] | Mesh[] | Mesh

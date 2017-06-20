@@ -1,6 +1,5 @@
 import { Vector3, Mesh, Material, Scene, VertexData, VertexBuffer } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
-import { TreesUtils } from "../Trees/TreesUtils"
-import { IVisualizable } from "../Utils"
+import { FindingPattern, IVisualizable } from "../Utils"
 import { PointCloud } from "./PointCloud"
 import { MCAlgo } from "./MarchingCubes"
 
@@ -11,7 +10,7 @@ export class GridOptions {
   public padding = 0
 
   public runImplicitSampling = true
-  public findingPattern : TreesUtils.FindingPattern
+  public findingPattern : FindingPattern
   public radius = .1
   public k = 1
   public wendlandRadius = .2

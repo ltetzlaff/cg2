@@ -1,4 +1,4 @@
-import { Vector3, Scene, SceneLoader, ISceneLoaderPlugin, Mesh, AbstractMesh, VertexData, Skeleton, ParticleSystem } from "../node_modules/babylonjs/dist/preview release/babylon.module"
+import { Vector3, Scene, SceneLoader, ISceneLoaderPlugin, Mesh, AbstractMesh, VertexData, Skeleton, ParticleSystem } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 
 //module BABYLON {
 export class OFFFileLoader implements ISceneLoaderPlugin {

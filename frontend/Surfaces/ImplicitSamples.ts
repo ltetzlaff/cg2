@@ -1,8 +1,7 @@
 import { Vector3, Color4, Mesh, Scene, Material, VertexBuffer } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
-import { IVisualizable } from "../Utils"
+import { Vertex, FindingPattern, IVisualizable } from "../Utils"
 import { PointCloud } from "./PointCloud"
 import { Grid3D } from "./Grid3D"
-import { TreesUtils } from "../Trees/TreesUtils"
 import { calculateMLSPoint } from "./SurfaceUtils"
 import { PolynomialBasis } from "./PolynomialBasis"
 
@@ -17,7 +16,7 @@ export class ImplicitSamples implements IVisualizable {
 
   constructor(source : PointCloud, grid : Grid3D) {
     const isNearest = (p : Vector3, p2 : Vector3) => {
-      const picked = source.tree.query(p2, TreesUtils.FindingPattern.KNearest, { k : 1 })
+      const picked = source.tree.query(p2, FindingPattern.KNearest, { k : 1 })
       return picked.length === 1 && picked[0].position.equals(p) 
     }
 

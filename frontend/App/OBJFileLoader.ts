@@ -1,6 +1,4 @@
-import { Vector3, Scene, StandardMaterial, Geometry, Vector2, Color3, Texture, Tools, SceneLoader, ISceneLoaderPlugin, Mesh, AbstractMesh, VertexData, Skeleton, ParticleSystem } from "../node_modules/babylonjs/dist/preview release/babylon.module"
-
-
+import { Vector3, Scene, StandardMaterial, Geometry, Vector2, Color3, Texture, Tools, SceneLoader, ISceneLoaderPlugin, Mesh, AbstractMesh, VertexData, Skeleton, ParticleSystem } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 
 /**
  * Class reading and parsing the MTL file bundled with the obj file.
