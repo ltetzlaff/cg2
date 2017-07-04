@@ -1,5 +1,6 @@
 import { Vector3, Color4, Mesh, Scene, Material, VertexBuffer } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
-import { Vertex, FindingPattern, IVisualizable } from "../Utils"
+import { Vertex } from "../Geometry/Vertex"
+import { FindingPattern, IVisualizable } from "../Utils"
 import { PointCloud } from "./PointCloud"
 import { Grid3D } from "./Grid3D"
 import { calculateMLSPoint } from "./SurfaceUtils"

@@ -1,7 +1,8 @@
 import { Vector3, Vector2, Ray, Mesh, MeshBuilder, Material, Scene } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 import { Box, intersects, getRadialBoundingVolume } from "./BoundingVolumes"
 import { Tree, IQueryable } from "./Tree"
-import { Vertex, FindingPattern, IVisualizable, getExtents } from "../Utils"
+import { Vertex } from "../Geometry/Vertex"
+import { FindingPattern, IVisualizable, getExtents } from "../Utils"
 
 export class OctreeOptions {
   public bucketSize : number

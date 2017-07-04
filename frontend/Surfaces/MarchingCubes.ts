@@ -1,5 +1,6 @@
 import { Vector3, Mesh, Scene, Material, IndicesArray, VertexData, MathTools } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
-import { Vertex, IVisualizable, showVertexNormals, getVertexData } from "../Utils"
+import { Vertex } from "../Geometry/Vertex"
+import { IVisualizable, showVertexNormals, getVertexData } from "../Utils"
 import { PointsOfCube, EdgesOfCube, EdgesMask, FacesMask } from "./Triangulation"
 import { ImplicitSamples } from "./ImplicitSamples"
 import { Grid3D } from "./Grid3D"

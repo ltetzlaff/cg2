@@ -1,7 +1,8 @@
 import { Vector3, Vector2 } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
 import * as math from "mathjs"
 import { Tree } from "../Trees/Tree"
-import { Vertex, FindingPattern } from "../Utils"
+import { Vertex } from "../Geometry/Vertex"
+import { FindingPattern } from "../Utils"
 import { PolynomialBasis } from "./PolynomialBasis"
 
 export function solveDeCasteljau(interpolatePoints : Vector3[], controlPoints : Vector3[], subdivisions : number) {

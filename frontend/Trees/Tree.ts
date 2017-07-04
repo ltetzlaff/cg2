@@ -1,5 +1,6 @@
 import { Vector3, Vector2, Ray } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
-import { Vertex, FindingPattern } from "../Utils"
+import { Vertex } from "../Geometry/Vertex"
+import { FindingPattern } from "../Utils"
 import { Sphere, Tube } from "./BoundingVolumes"
 
 export interface IQueryable{
