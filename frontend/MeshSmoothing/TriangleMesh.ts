@@ -29,27 +29,46 @@ export class TriangleMesh implements IVisualizable {
     
     // Loop Faces
     for (let i = 0, fi = 0, len = indices.length; i < len; i += 3, fi++) {
-      const f = new Face()
-      f.index = fi
       
       // Loop Vertices of Triangle
       const edges = [
         { a : indices[i + 0], b : indices[i + 1] },
         { a : indices[i + 1], b : indices[i + 2] },
-        { a : indices[i + 2], b : indices[i + 0] },        
+      //  { a : indices[i + 2], b : indices[i + 0] },  // not needed here       
       ]
 
-      const he0 = new HalfEdge(vertices[edges[0].a])
-      halfEdges.push(he0)
-      const he1 = new HalfEdge(vertices[edges[0].b], he0)
-      halfEdges.push(he1)
-      const he2 = new HalfEdge(vertices[edges[1].a], he1)
-      
-      f.startEdge
-      faces.push(f)
+      // Create HalfEdges
+      const h0 = new HalfEdge(vertices[edges[0].a])
+      const h1 = new HalfEdge(vertices[edges[0].b], h0)
+      const h2 = new HalfEdge(vertices[edges[1].a], h1)
+
+      h0.prev = h2
+      h0.next = h1
+
+      h1.prev = h0
+      h1.next = h2
+
+      h2.prev = h1
+      h2.next = h0
+
+      halfEdges.push(h0, h1, h2)      
+
+      // Create Face
+      faces.push(new Face(h0, fi))
     } 
 
+    // Find opposing edges
+    halfEdges.forEach(h => {
+      if (h.opp) return
+      
+      const start = h.vertex
+      const end = h.next.vertex
 
+      // #TODO
+      halfEdges.forEach(h2 => {
+        if ()
+      })
+    })
   }
 
   generateVertexNormals() {
