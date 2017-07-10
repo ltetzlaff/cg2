@@ -6,15 +6,21 @@ export class HalfEdge {
   public prev : HalfEdge
   public opp : HalfEdge
 
-  constructor(vertex : Vertex, prev? : HalfEdge, next? : HalfEdge) {
+  constructor(vertex : Vertex) {
     this.vertex = vertex
+  }
 
-    if (prev) {
-      this.prev = prev
-      prev.next = this
-    } else if (next) {
-      this.next = next
-      next.prev = this
-    }
+  public getNeighborVertices() : Vertex[] {
+    const adjacentVerts : Vertex[] = []
+    
+    let opp : HalfEdge = this.opp
+
+    // iterate neighborhood
+    do {
+      adjacentVerts.push(opp.vertex)
+      opp = opp.next.opp
+    } while (opp !== this.opp // dont loop infinitely
+        && opp.next.vertex === this.vertex) // pivot
+    return adjacentVerts
   }
 }
