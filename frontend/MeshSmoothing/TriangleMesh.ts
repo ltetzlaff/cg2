@@ -1,13 +1,14 @@
 import { Vector3, Mesh, Color3, Scene, Material, VertexBuffer } from "../../node_modules/babylonjs/dist/preview release/babylon.module"
-import { IVisualizable, showMeshsVertexNormals } from "../Utils"
+import { IVisualizable, showMeshsVertexNormals, showVertexNormals } from "../Utils"
 import { PointCloud } from "../Surfaces/PointCloud"
 
 import { Vertex } from "../Geometry/Vertex"
+import { HalfEdgeStructure } from "./HalfEdgeStructure"
 import { HalfEdge } from "../Geometry/HalfEdge"
-import { Face } from "../Geometry/Face"
 
 export class TriangleMesh implements IVisualizable {
   private pointCloud : PointCloud
+  private halfEdgeStructure : HalfEdgeStructure
 
   public visualization : Mesh = null
   public normalVisualization: Mesh
@@ -16,68 +17,26 @@ export class TriangleMesh implements IVisualizable {
   constructor(m : Mesh) {
     this.visualization = m
 
+    // PointCloud
     this.pointCloud = new PointCloud(m)
-
-    // HE DS
-    // VERTICES
-    const vertices : Vertex[] = this.pointCloud.vertices
     
-    // FACES
+    // HalfEdgeStructure
+    const { vertices } = this.pointCloud  
     const indices = m.getIndices() as number[]
-    const halfEdges : HalfEdge[] = []    
-    const faces : Face[] = []
-    
-    // Loop Faces
-    for (let i = 0, fi = 0, len = indices.length; i < len; i += 3, fi++) {
-      
-      // Loop Vertices of Triangle
-      const edges = [
-        { a : indices[i + 0], b : indices[i + 1] },
-        { a : indices[i + 1], b : indices[i + 2] },
-      //  { a : indices[i + 2], b : indices[i + 0] },  // not needed here       
-      ]
-
-      // Create HalfEdges
-      const h0 = new HalfEdge(vertices[edges[0].a])
-      const h1 = new HalfEdge(vertices[edges[0].b], h0)
-      const h2 = new HalfEdge(vertices[edges[1].a], h1)
-
-      h0.prev = h2
-      h0.next = h1
-
-      h1.prev = h0
-      h1.next = h2
-
-      h2.prev = h1
-      h2.next = h0
-
-      halfEdges.push(h0, h1, h2)      
-
-      // Create Face
-      faces.push(new Face(h0, fi))
-    } 
-
-    // Find opposing edges
-    halfEdges.forEach(h => {
-      if (h.opp) return
-      
-      const start = h.vertex
-      const end = h.next.vertex
-
-      // #TODO
-      halfEdges.forEach(h2 => {
-        if ()
-      })
-    })
+    this.halfEdgeStructure = new HalfEdgeStructure(vertices, indices)
   }
 
   generateVertexNormals() {
-    const pc = this.pointCloud
-    pc.vertices.forEach(v => {
-      /*pc.tree.query()
-      
-      v.normal = Vector3.Cross()*/
+    this.pointCloud.vertices.forEach(v => {
+      let normal = Vector3.Zero()      
 
+      // Get Adjacent Edges pointing towards v and make weighted sum from their direction
+      v.halfEdge.getNeighborVertices().forEach(v2 => {
+        const dir = v2.position.subtract(v.position)
+        normal.subtractInPlace(dir) // subtract because we want outwards
+      })
+
+      v.normal = normal.normalize()
     })
   }
 
@@ -85,7 +44,8 @@ export class TriangleMesh implements IVisualizable {
     if (this.normalVisualization) this.normalVisualization.dispose()
     if (!show) return
 
-    this.normalVisualization = showMeshsVertexNormals(this.visualization, color)
+    //this.normalVisualization = showMeshsVertexNormals(this.visualization, color)
+    this.normalVisualization = showVertexNormals(this.pointCloud.vertices, scene, color)
   }
   
   public visualize(show : boolean, material : Material, scene : Scene) {
