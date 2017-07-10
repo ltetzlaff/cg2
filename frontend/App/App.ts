@@ -86,15 +86,17 @@ export class App {
 
       meshes[0].material = this.mat.sourceMesh
       this.scene.meshes.push(meshes[0])
-      this.sourceMesh = new TriangleMesh(meshes[0] as Mesh)
       
-      if (this.sourceMesh) {
+      const sm = new TriangleMesh(meshes[0] as Mesh)
+      this.sourceMesh = sm      
+      if (sm) {
         const { ui } = this
         const viz = ui.get("#pVisualizeSourceMesh", Type.Checkbox) as boolean
         const vizNormals = ui.get("#pVisualizeVertexNormals", Type.Checkbox) as boolean
-        this.sourceMesh.visualize(viz, this.mat.sourceMesh, this.scene)
-        this.sourceMesh.visualizeNormals(vizNormals, "white", this.scene)
-        this.sourceMesh.visualization.convertToFlatShadedMesh()
+        sm.visualize(viz, this.mat.sourceMesh, this.scene)
+        sm.generateVertexNormals()
+        sm.visualizeNormals(vizNormals, "white", this.scene)
+        sm.visualization.convertToFlatShadedMesh()
       }
     })
   }

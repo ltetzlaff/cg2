@@ -45,7 +45,7 @@ export class SurfaceMesh extends Mesh implements IVisualizable {
     const oldNormals = newData[VertexBuffer.NormalKind]
     
     for (let i = 0; i < totalIndices; i++) {
-      indices[i]      = i
+      indices[i] = i
     }
 
     for (let i = 0; i < totalIndices; i += 6) {
